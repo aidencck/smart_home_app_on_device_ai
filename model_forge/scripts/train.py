@@ -3,6 +3,19 @@ import sys
 import os
 import platform
 
+def ensure_env():
+    try:
+        __import__("mlx_lm")
+        return sys.executable
+    except Exception:
+        root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+        venv_py = os.path.join(root, "venv", "bin", "python")
+        if not os.path.exists(venv_py):
+            subprocess.check_call(["python3", "-m", "venv", os.path.join(root, "venv")])
+        subprocess.check_call([venv_py, "-m", "pip", "install", "--upgrade", "pip"])
+        subprocess.check_call([venv_py, "-m", "pip", "install", "-r", os.path.join(root, "requirements.txt")])
+        return venv_py
+
 def analyze_env(base_model, data_dir, adapter_path):
     print("🔍 训练环境检查开始")
     os_ok = sys.platform == "darwin"
@@ -74,8 +87,9 @@ def run_mlx_lora():
     
     # MLX-LM LoRA command
     # We use a small number of iterations (e.g., 20) for demonstration purposes.
+    py = ensure_env()
     cmd = [
-        sys.executable, "-m", "mlx_lm.lora",
+        py, "-m", "mlx_lm.lora",
         "--model", base_model,
         "--data", data_dir,
         "--train",
