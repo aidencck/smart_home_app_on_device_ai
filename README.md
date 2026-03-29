@@ -42,6 +42,11 @@ A next-generation Smart Home application demonstrating the **production-ready im
 
 * [智能家居端侧 AI Agent 架构复盘与落地能力指南](docs/honest_architecture_reflection.md)
 * [端侧模型深度定制与全链路微调方案 (架构师视角)](model_forge/on_device_model_customization_pipeline.md)
+* [Mac M4 端侧模型微调与量化复现 SOP](model_forge/mac_m4_reproduction_sop.md)
+* [数据评估体系与合成规则逆向推导](model_forge/data_evaluation_and_synthesis_rules.md)
+* [智能家居端侧模型：数据评估与验收体系指南](model_forge/data_evaluation_and_acceptance_framework.md)
+* [智能家居端侧模型业务扩展与迭代 SOP](model_forge/business_expansion_model_iteration_sop.md)
+* [Model Forge 目录说明](model_forge/README.md)
 
 ## 🏗 架构全景 (Architecture Overview)
 
