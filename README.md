@@ -1,4 +1,4 @@
-# 🏠 Smart Home On-Device AI Agent
+# 🏠 Smart Home On-Device AI Agent (端侧大模型智能管家)
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg?logo=flutter)
 ![Dart](https://img.shields.io/badge/Dart-3.x-0175C2.svg?logo=dart)
@@ -6,36 +6,54 @@
 ![Isar DB](https://img.shields.io/badge/Isar-3.1-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-success.svg)
 
-A next-generation Smart Home application featuring a **purely on-device, zero-latency, and privacy-first AI Agent**. Powered by `llama.cpp` through Dart FFI and a lightweight local RAG (Retrieval-Augmented Generation) system.
+A next-generation Smart Home application demonstrating the **production-ready implementation of On-Device AI + Agent architecture**. Powered by `llama.cpp` through Dart FFI and a lightweight local RAG (Retrieval-Augmented Generation) system.
+
+这是一个致力于探索和展示 **“端侧大模型 + Agent” 真实落地能力** 的智能家居开源项目。它彻底抛弃了云端 API 的依赖，在移动设备本地完成了从自然语言理解、意图规划到 IoT 硬件控制的完整 Agent 闭环。
 
 ---
 
-## ✨ Core Features
+## 🌟 核心落地能力 (Why On-Device Agent?)
 
-*   **🧠 Pure On-Device Inference**: Runs LLMs (Gemma-2B/Qwen-1.5B) entirely locally on your phone using `llama.cpp`. No cloud dependencies, no network latency, and absolute privacy.
-*   **🎯 Zero-Hallucination Hardware Control**: Utilizes dynamic **GBNF (GGML BNF) grammar trees** to strictly constrain the AI's output to valid JSON formats and existing device IDs. It guarantees 100% deterministic parsing for IoT control.
-*   **📚 Edge RAG (Retrieval-Augmented Generation)**: Employs `Isar` object database to store user behavior logs locally. The AI can dynamically retrieve these logs to answer queries like *"Did anyone open the door today?"* without ever sending data to the cloud.
-*   **⚡ Isolate-Driven Architecture**: Heavy C++ model loading and inference are isolated in Dart background threads, ensuring the Flutter UI maintains a buttery-smooth 60fps.
-*   **🔍 Transparent AI "Chain of Thought"**: The UI visualizes the AI's thought process (Intent Routing -> RAG Context -> Grammar Generation) and displays clear "Before vs. After" state changes for executed commands.
+大模型直接控制物理世界的硬件，最大的阻碍是**延迟**、**隐私**和**幻觉**。本项目通过以下三大架构创新，完美解决了这些落地痛点：
 
-## 🏗 Architecture Overview
+### 1. 🎯 零幻觉的硬件控制 (Zero-Hallucination Determinism)
+*   **痛点**：云端大模型容易产生幻觉，输出不存在的设备 ID 或错误的 JSON 格式，导致硬件控制崩溃。
+*   **落地实现**：首创性地引入了 **动态 GBNF (GGML BNF) 语法树**。在每次推理前，Agent 会获取当前真实的家庭设备列表，动态生成底层 C++ 采样约束（如 `device_id ::= "\"light_1\"" | "\"ac_1\""`）。从概率分布的最底层掐断了 AI 输出非法字符的可能，实现了 **100% 的 JSON 解析成功率和实体准确率**。
 
-The project is strictly decoupled into two layers: the UI application and the independent AI package (`on_device_agent`).
+### 2. 📚 纯本地的隐私级 RAG (Edge RAG for Privacy)
+*   **痛点**：用户询问“今天谁开了大门”、“卧室监控有没有异常”等涉及极高隐私的数据，绝不能上传云端。
+*   **落地实现**：利用 **Isar 本地对象数据库** 替代沉重的向量库。Agent 内部实现了轻量级的意图路由，拦截查询类指令后，在几毫秒内检索本地 `BehaviorLog`，并作为 Context 动态注入 Prompt。整个过程**完全断网可用**，实现了真正的“隐私级数据增强”。
+
+### 3. ⚡ 异步隔离与毫秒级响应 (Isolate-Driven Edge Inference)
+*   **痛点**：在手机上跑 2B 级别的模型，极易导致主线程阻塞，造成 App 卡顿甚至 ANR。
+*   **落地实现**：基于 Dart 的 FFI 深度绑定 `llama.cpp` 源码，并将模型加载（Mmap）、Prompt 预处理和 Token 采样全部压入 **Dart Isolate (独立内存堆的后台线程)** 中。确保在进行繁重的张量计算时，Flutter UI 依然能保持丝滑的 60fps 帧率。
+
+---
+
+## ✨ 交互体验亮点 (UX Highlights)
+
+*   **🧠 透明的“思维链”展示**：告别 AI 的黑盒。UI 实时渲染 Agent 的规划过程（意图识别 -> 本地 RAG 检索 -> 动态语法树生成 -> 指令执行）。
+*   **🔄 操作前后状态对比**：精准捕捉 AI 控制前后的 IoT 设备状态（例如：空调 `[关闭] ➔ [开启 (22°C)]`），在聊天气泡中提供极具安全感的状态反馈。
+*   **📊 极客性能看板**：在 Debug 模式下，每条指令下方会自动挂载性能追踪面板，展示 **端侧推理耗时** 和 **Tokens/s (生成吞吐量)**，为架构调优提供直观依据。
+
+## 🏗 架构全景 (Architecture Overview)
+
+项目被严格解耦为 **UI 表现层** 和 **端侧 Agent 内核包**，便于在任何 Flutter 项目中复用：
 
 ```text
-lib/ (Flutter UI)
- ├── main.dart (App Entry & AgentScreen)
- └── models/ & services/ (Mock IoT Device Management)
+lib/ (Flutter UI 层)
+ ├── main.dart (App Entry, Chat UI & Metrics Panel)
+ └── services/ (IoT 设备状态管理模拟)
 
-packages/on_device_agent/ (Core AI Logic)
+packages/on_device_agent/ (端侧 Agent 内核)
  ├── lib/src/
- │    ├── engine/        # LlamaCppEngine (FFI bindings) & MockEngine
- │    ├── context/       # Prompt builder & Dynamic GBNF generator
- │    └── executor/      # JSON Parser, Isar DB RAG retrieval, Guardrails
- └── ios/Classes/llama_cpp_src/ # llama.cpp C++ source code submodule
+ │    ├── engine/        # 基于 FFI 的 LlamaCppEngine & Isolate 调度
+ │    ├── context/       # 环境感知、RAG 日志组装 & 动态 GBNF 生成器
+ │    └── executor/      # 动作执行器 (含安全护栏 Guardrails & 行为落库)
+ └── ios/Classes/llama_cpp_src/ # llama.cpp 底层 C++ 源码 (子模块)
 ```
 
-## 🚀 Getting Started
+## 🚀 快速开始 (Getting Started)
 
 ### Prerequisites
 *   Flutter SDK `3.x`
