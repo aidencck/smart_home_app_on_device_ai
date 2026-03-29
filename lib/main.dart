@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart'; // 添加 kDebugMode 支持
 import 'package:on_device_agent/on_device_agent.dart';
+import 'models/device.dart';
+import 'services/device_service.dart';
+import 'services/virtual_device_service.dart';
 
 void main() {
   runApp(const SmartHomeApp());
@@ -8,71 +11,69 @@ void main() {
 
 // --- 全局设备状态管理 ---
 class DeviceManager extends ChangeNotifier {
-  final List<Map<String, dynamic>> devices = [
-    {
-      'id': 'light_1',
-      'name': '客厅灯',
-      'room': '客厅',
-      'icon': Icons.lightbulb_outline,
-      'on': true,
-    },
-    {
-      'id': 'ac_1',
-      'name': '卧室空调',
-      'room': '主卧',
-      'icon': Icons.ac_unit,
-      'on': false,
-      'temperature': 26,
-    },
-    {
-      'id': 'lock_1',
-      'name': '门锁',
-      'room': '大门',
-      'icon': Icons.lock_outline,
-      'on': true,
-    },
-    {
-      'id': 'cam_1',
-      'name': '摄像头',
-      'room': '客厅',
-      'icon': Icons.videocam_outlined,
-      'on': true,
-    },
-    {
-      'id': 'air_1',
-      'name': '空气净化器',
-      'room': '书房',
-      'icon': Icons.air,
-      'on': false,
-    },
-    {
-      'id': 'robot_1',
-      'name': '扫地机器人',
-      'room': '客厅',
-      'icon': Icons.cleaning_services_outlined,
-      'on': false,
-    },
-    {'id': 'tv_1', 'name': '电视', 'room': '客厅', 'icon': Icons.tv, 'on': false},
-  ];
+  final DeviceService _service;
+  List<SmartDevice> _devices = [];
+  bool _isInitialized = false;
 
-  void toggleDevice(String id) {
-    final device = devices.firstWhere((d) => d['id'] == id);
-    device['on'] = !(device['on'] as bool);
+  DeviceManager(this._service) {
+    _init();
+  }
+
+  Future<void> _init() async {
+    await _service.initialize();
+    _devices = await _service.getDevices();
+    _isInitialized = true;
     notifyListeners();
   }
 
-  void setDeviceState(String nameKeywords, bool isOn, {int? temperature}) {
+  bool get isInitialized => _isInitialized;
+
+  List<Map<String, dynamic>> get devices => _devices.map((d) {
+    return {
+      'id': d.id,
+      'name': d.name,
+      'room': d.room,
+      'type': d.type.name,
+      'on': d.isOn,
+      'icon': d.icon,
+      if (d is AcDevice) 'temperature': d.temperature,
+    };
+  }).toList();
+
+  Future<void> toggleDevice(String id) async {
+    // 乐观更新
+    final deviceIndex = _devices.indexWhere((d) => d.id == id);
+    if (deviceIndex == -1) return;
+    
+    _devices[deviceIndex].isOn = !_devices[deviceIndex].isOn;
+    notifyListeners();
+
+    // 实际调用
+    final success = await _service.toggleDevice(id);
+    if (!success) {
+      // 失败回滚
+      _devices[deviceIndex].isOn = !_devices[deviceIndex].isOn;
+      notifyListeners();
+    }
+  }
+
+  Future<void> setDeviceState(String nameKeywords, bool isOn, {int? temperature}) async {
     bool changed = false;
-    for (var device in devices) {
-      if ((device['name'] as String).contains(nameKeywords) ||
-          (device['room'] as String).contains(nameKeywords)) {
-        if (device['on'] != isOn) {
-          device['on'] = isOn;
+    for (var i = 0; i < _devices.length; i++) {
+      final d = _devices[i];
+      if (d.name.contains(nameKeywords) || d.room.contains(nameKeywords)) {
+        if (d.isOn != isOn) {
+          d.isOn = isOn;
           changed = true;
         }
-        if (temperature != null && device.containsKey('temperature')) {
-          device['temperature'] = temperature;
+        if (temperature != null && d is AcDevice) {
+          d.temperature = temperature;
           changed = true;
+        }
+        
+        if (changed) {
+          // 同步给 service
+          await _service.setDeviceState(d.id, d.toJson());
         }
       }
     }
@@ -81,33 +82,55 @@ class DeviceManager extends ChangeNotifier {
     }
   }
 
-  // 新增：根据确切的 deviceId 设置状态，返回操作前后的状态
-  Map<String, dynamic>? setDeviceStateById(String deviceId, bool isOn, {dynamic value}) {
+  // 根据确切的 deviceId 设置状态，返回操作前后的状态
+  Future<Map<String, dynamic>?> setDeviceStateById(String deviceId, bool isOn, {dynamic value}) async {
     try {
-      final device = devices.firstWhere((d) => d['id'] == deviceId);
-      final beforeState = Map<String, dynamic>.from(device);
+      final deviceIndex = _devices.indexWhere((d) => d.id == deviceId);
+      if (deviceIndex == -1) return null;
+      
+      final device = _devices[deviceIndex];
+      final beforeState = {
+        'id': device.id,
+        'name': device.name,
+        'room': device.room,
+        'type': device.type.name,
+        'on': device.isOn,
+        'icon': device.icon,
+        if (device is AcDevice) 'temperature': device.temperature,
+      };
       
       bool changed = false;
-      if (device['on'] != isOn) {
-        device['on'] = isOn;
+      if (device.isOn != isOn) {
+        device.isOn = isOn;
         changed = true;
       }
       
-      if (value != null && device.containsKey('temperature')) {
+      if (value != null && device is AcDevice) {
          int? temp = int.tryParse(value.toString());
-         if (temp != null && device['temperature'] != temp) {
-           device['temperature'] = temp;
+         if (temp != null && device.temperature != temp) {
+           device.temperature = temp;
            changed = true;
          }
       }
       
       if (changed) {
+        await _service.setDeviceState(device.id, device.toJson());
         notifyListeners();
       }
       
+      final afterState = {
+        'id': device.id,
+        'name': device.name,
+        'room': device.room,
+        'type': device.type.name,
+        'on': device.isOn,
+        'icon': device.icon,
+        if (device is AcDevice) 'temperature': device.temperature,
+      };
+
       return {
         'before': beforeState,
-        'after': Map<String, dynamic>.from(device),
+        'after': afterState,
       };
     } catch (e) {
       return null;
@@ -115,30 +138,50 @@ class DeviceManager extends ChangeNotifier {
   }
 
   List<Map<String, dynamic>> getDevicesByName(String nameKeywords) {
-    return devices
+    return _devices
         .where(
           (d) =>
-              (d['name'] as String).contains(nameKeywords) ||
-              (d['room'] as String).contains(nameKeywords),
+              d.name.contains(nameKeywords) ||
+              d.room.contains(nameKeywords),
         )
+        .map((d) {
+          return {
+            'id': d.id,
+            'name': d.name,
+            'room': d.room,
+            'type': d.type.name,
+            'on': d.isOn,
+            'icon': d.icon,
+            if (d is AcDevice) 'temperature': d.temperature,
+          };
+        })
         .toList();
   }
 
   Map<String, dynamic>? getDeviceByName(String nameKeywords) {
     try {
-      return devices.firstWhere(
+      final d = _devices.firstWhere(
         (d) =>
-            (d['name'] as String).contains(nameKeywords) ||
-            (d['room'] as String).contains(nameKeywords),
+            d.name.contains(nameKeywords) ||
+            d.room.contains(nameKeywords),
       );
+      return {
+        'id': d.id,
+        'name': d.name,
+        'room': d.room,
+        'type': d.type.name,
+        'on': d.isOn,
+        'icon': d.icon,
+        if (d is AcDevice) 'temperature': d.temperature,
+      };
     } catch (e) {
       return null;
     }
   }
 }
 
-// 全局实例
-final deviceManager = DeviceManager();
+// 全局实例，注入虚拟服务（后续可替换为 RemoteDeviceService）
+final deviceManager = DeviceManager(VirtualDeviceService());
 
 class SmartHomeApp extends StatelessWidget {
   const SmartHomeApp({super.key});
@@ -568,6 +611,10 @@ class _DevicesPageState extends State<DevicesPage> {
     return ListenableBuilder(
       listenable: deviceManager,
       builder: (context, _) {
+        if (!deviceManager.isInitialized) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        
         return GridView.builder(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -1849,7 +1896,7 @@ class _AgentScreenState extends State<AgentScreen> {
           final intent = result.intent!;
           final isOn = intent.action == 'turn_on' || intent.action == 'set_temp';
           
-          final stateChanges = deviceManager.setDeviceStateById(
+          final stateChanges = await deviceManager.setDeviceStateById(
             intent.deviceId, 
             isOn, 
             value: intent.value,
@@ -1898,7 +1945,7 @@ class _AgentScreenState extends State<AgentScreen> {
           text.contains("温度") ||
           (isContinuing && text.contains("高一点"))) {
         int temp = text.contains("高一点") ? 28 : 26;
-        deviceManager.setDeviceState("空调", true, temperature: temp);
+        await deviceManager.setDeviceState("空调", true, temperature: temp);
         affectedDevices = deviceManager.getDevicesByName("空调");
         responseText = text.contains("高一点")
             ? "🤖 已为您将空调温度调高到 $temp 度。"
@@ -1909,22 +1956,22 @@ class _AgentScreenState extends State<AgentScreen> {
           text.contains("灯") ||
           (isContinuing && (text.contains("亮一点") || text.contains("关掉它")))) {
         bool isTurningOn = !text.contains("关");
-        deviceManager.setDeviceState("灯", isTurningOn);
+        await deviceManager.setDeviceState("灯", isTurningOn);
         affectedDevices = deviceManager.getDevicesByName("灯");
         responseText = isTurningOn ? "🤖 已为您调节灯光。" : "🤖 已为您关灯。";
         _agent.contextProvider.addMessage('user', text);
         _agent.contextProvider.addMessage('agent', responseText);
       } else if (text.contains("打扫") || text.contains("扫地")) {
-        deviceManager.setDeviceState("扫地", true);
+        await deviceManager.setDeviceState("扫地", true);
         affectedDevices = deviceManager.getDevicesByName("扫地");
         responseText = "🤖 已为您启动扫地机器人开始全屋清扫。";
         _agent.contextProvider.addMessage('user', text);
         _agent.contextProvider.addMessage('agent', responseText);
       } else if (text.contains("出门") || text.contains("离家")) {
-        deviceManager.setDeviceState("灯", false);
-        deviceManager.setDeviceState("空调", false);
-        deviceManager.setDeviceState("电视", false);
-        deviceManager.setDeviceState("扫地", true); // 离家自动扫地
+        await deviceManager.setDeviceState("灯", false);
+        await deviceManager.setDeviceState("空调", false);
+        await deviceManager.setDeviceState("电视", false);
+        await deviceManager.setDeviceState("扫地", true); // 离家自动扫地
         affectedDevices = [
           ...deviceManager.getDevicesByName("灯"),
           ...deviceManager.getDevicesByName("空调"),
@@ -1935,9 +1982,9 @@ class _AgentScreenState extends State<AgentScreen> {
         _agent.contextProvider.addMessage('user', text);
         _agent.contextProvider.addMessage('agent', responseText);
       } else if (text.contains("睡眠模式")) {
-        deviceManager.setDeviceState("灯", false);
-        deviceManager.setDeviceState("电视", false);
-        deviceManager.setDeviceState("空调", true, temperature: 26);
+        await deviceManager.setDeviceState("灯", false);
+        await deviceManager.setDeviceState("电视", false);
+        await deviceManager.setDeviceState("空调", true, temperature: 26);
         affectedDevices = [
           ...deviceManager.getDevicesByName("灯"),
           ...deviceManager.getDevicesByName("电视"),
@@ -1947,8 +1994,8 @@ class _AgentScreenState extends State<AgentScreen> {
         _agent.contextProvider.addMessage('user', text);
         _agent.contextProvider.addMessage('agent', responseText);
       } else if (text.contains("回家模式")) {
-        deviceManager.setDeviceState("灯", true);
-        deviceManager.setDeviceState("空调", true, temperature: 26);
+        await deviceManager.setDeviceState("灯", true);
+        await deviceManager.setDeviceState("空调", true, temperature: 26);
         affectedDevices = [
           ...deviceManager.getDevicesByName("灯"),
           ...deviceManager.getDevicesByName("空调"),
@@ -1958,10 +2005,10 @@ class _AgentScreenState extends State<AgentScreen> {
         _agent.contextProvider.addMessage('agent', responseText);
       } else if (text.contains("电视") || text.contains("看电影")) {
         bool isTurningOn = text.contains("开") || text.contains("看电影");
-        deviceManager.setDeviceState("电视", isTurningOn);
+        await deviceManager.setDeviceState("电视", isTurningOn);
         if (text.contains("看电影")) {
-          deviceManager.setDeviceState("灯", false);
-          deviceManager.setDeviceState("窗帘", false);
+          await deviceManager.setDeviceState("灯", false);
+          await deviceManager.setDeviceState("窗帘", false);
         }
         affectedDevices = [
           ...deviceManager.getDevicesByName("电视"),

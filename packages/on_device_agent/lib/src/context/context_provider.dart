@@ -31,7 +31,18 @@ class AgentContextProvider {
   /// 在实际项目中，这里会调用您的 IoT 状态管理层
   String getDeviceStateSnapshot() {
     if (_currentDevices.isNotEmpty) {
-      return jsonEncode(_currentDevices);
+      // 过滤掉可能导致 JSON 序列化失败的不可序列化对象 (如 IconData)
+      final safeDevices = _currentDevices.map((device) {
+        final Map<String, dynamic> safeMap = {};
+        device.forEach((key, value) {
+          // 只保留基本类型
+          if (value is String || value is num || value is bool || value == null) {
+            safeMap[key] = value;
+          }
+        });
+        return safeMap;
+      }).toList();
+      return jsonEncode(safeDevices);
     }
     // Mock data for demonstration fallback
     final List<Map<String, dynamic>> mockStates = [

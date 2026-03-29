@@ -96,7 +96,18 @@ class SmartHomeAgent {
 
       // --- 2. 动态生成 GBNF 语法树 ---
       if (availableDevices != null) {
-        _contextProvider.updateDevices(availableDevices);
+        // 构建 GBNF 规则时，只需要设备的 ID 列表，过滤掉不可序列化的 IconData 等属性
+        final safeDevices = availableDevices.map((d) {
+          final Map<String, dynamic> safeMap = {};
+          d.forEach((key, value) {
+            if (value is String || value is num || value is bool || value == null) {
+              safeMap[key] = value;
+            }
+          });
+          return safeMap;
+        }).toList();
+        
+        _contextProvider.updateDevices(safeDevices);
       }
       
       String deviceIdRule = '"\\"system\\""'; // 默认只有 system (用于回复)
