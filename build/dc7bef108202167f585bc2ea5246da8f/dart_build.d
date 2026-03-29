@@ -1,0 +1,1 @@
+ /Users/aiden/Documents/macinit/smarthome\ APP/smart_home_app/build/dc7bef108202167f585bc2ea5246da8f/dart_build_result.json:  /Users/aiden/Documents/macinit/smarthome\ APP/smart_home_app/.dart_tool/package_config.json /Users/aiden/Documents/macinit/smarthome\ APP/smart_home_app/pubspec.yaml /Users/aiden/flutter/bin/cache/dart-sdk/version

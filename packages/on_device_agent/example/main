@@ -1,0 +1,47 @@
+// ignore_for_file: avoid_print
+import 'package:on_device_agent/on_device_agent.dart';
+
+void main() async {
+  print("=== 端侧 AI Agent 测试示例 ===");
+  
+  // 实例化 Agent
+  final agent = SmartHomeAgent();
+  
+  // 初始化 (加载模型文件)
+  // 如果需要跑真实推理，请替换为一个真实存在的 gguf 模型路径
+  // 例如下载一个小模型放入 assets 目录并修改这里
+  // await agent.initialize(modelPath: "assets/models/qwen1_5-1_8b-chat-q4_k_m.gguf");
+  
+  try {
+    await agent.initialize(modelPath: "assets/models/gemma-2b-q4.bin");
+  } catch(e) {
+    print("【提示】加载模型失败。如要真实运行，请确保下载了有效的 GGUF 模型文件并放置在正确的路径下。");
+    print("错误详情: $e");
+    return;
+  }
+  
+  // 测试用例 1：正常的模糊意图
+  final result1 = await agent.handleUserQuery(
+    "我有点热，把温度调低一点",
+    availableDevices: [{'id': 'ac_1', 'name': '空调', 'room': '主卧'}],
+  );
+  print("结果1: $result1");
+  
+  print("\n");
+  
+  // 测试用例 2：直接指令
+  final result2 = await agent.handleUserQuery(
+    "帮我开灯",
+    availableDevices: [{'id': 'light_1', 'name': '灯', 'room': '客厅'}],
+  );
+  print("结果2: $result2");
+
+  print("\n");
+
+  // 测试用例 3：RAG 查询
+  final result3 = await agent.handleUserQuery(
+    "客厅灯开过吗？",
+    availableDevices: [{'id': 'light_1', 'name': '灯', 'room': '客厅'}],
+  );
+  print("结果3: $result3");
+}
