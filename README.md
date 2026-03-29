@@ -8,6 +8,16 @@
 ![Isar DB](https://img.shields.io/badge/Isar-3.1-green.svg)
 ![License](https://img.shields.io/badge/License-MIT-success.svg)
 
+## 📚 项目文档 (Documentation)
+
+* [智能家居端侧 AI Agent 架构复盘与落地能力指南](docs/honest_architecture_reflection.md)
+* [端侧模型深度定制与全链路微调方案 (架构师视角)](model_forge/on_device_model_customization_pipeline.md)
+* [Mac M4 端侧模型微调与量化复现 SOP](model_forge/mac_m4_reproduction_sop.md)
+* [数据评估体系与合成规则逆向推导](model_forge/data_evaluation_and_synthesis_rules.md)
+* [智能家居端侧模型：数据评估与验收体系指南](model_forge/data_evaluation_and_acceptance_framework.md)
+* [智能家居端侧模型业务扩展与迭代 SOP](model_forge/business_expansion_model_iteration_sop.md)
+* [Model Forge 目录说明](model_forge/README.md)
+
 A next-generation Smart Home application demonstrating the **production-ready implementation of On-Device AI + Agent architecture**. Powered by `llama.cpp` through Dart FFI and a lightweight local RAG (Retrieval-Augmented Generation) system.
 
 这是一个致力于探索和展示 **“端侧大模型 + Agent” 真实落地能力** 的智能家居开源项目。它彻底抛弃了云端 API 的依赖，在移动设备本地完成了从自然语言理解、意图规划到 IoT 硬件控制的完整 Agent 闭环。
@@ -38,15 +48,7 @@ A next-generation Smart Home application demonstrating the **production-ready im
 *   **🔄 操作前后状态对比**：精准捕捉 AI 控制前后的 IoT 设备状态（例如：空调 `[关闭] ➔ [开启 (22°C)]`），在聊天气泡中提供极具安全感的状态反馈。
 *   **📊 极客性能看板**：在 Debug 模式下，每条指令下方会自动挂载性能追踪面板，展示 **端侧推理耗时** 和 **Tokens/s (生成吞吐量)**，为架构调优提供直观依据。
 
-## 📚 项目文档 (Documentation)
 
-* [智能家居端侧 AI Agent 架构复盘与落地能力指南](docs/honest_architecture_reflection.md)
-* [端侧模型深度定制与全链路微调方案 (架构师视角)](model_forge/on_device_model_customization_pipeline.md)
-* [Mac M4 端侧模型微调与量化复现 SOP](model_forge/mac_m4_reproduction_sop.md)
-* [数据评估体系与合成规则逆向推导](model_forge/data_evaluation_and_synthesis_rules.md)
-* [智能家居端侧模型：数据评估与验收体系指南](model_forge/data_evaluation_and_acceptance_framework.md)
-* [智能家居端侧模型业务扩展与迭代 SOP](model_forge/business_expansion_model_iteration_sop.md)
-* [Model Forge 目录说明](model_forge/README.md)
 
 ## 🏗 架构全景 (Architecture Overview)
 

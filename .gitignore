@@ -28,3 +28,24 @@ packages/**/.flutter-plugins
 # Flutter ephemeral generated files
 ios/Flutter/ephemeral/
 windows/flutter/ephemeral/
+android/.gradle/
+android/local.properties
+android/**/build/
+android/**/.cxx/
+ios/Pods/
+ios/DerivedData/
+ios/Runner.xcworkspace/
+ios/.symlinks/
+macos/Pods/
+macos/DerivedData/
+macos/Runner.xcworkspace/
+linux/**/build/
+web/**/build/
+*.log
+*.tmp
+*.bak
+model_forge/venv/
+model_forge/scripts/llama.cpp/
+model_forge/exports/**/*.gguf
+model_forge/data/**/*.jsonl
+model_forge/notebooks/.ipynb_checkpoints/
