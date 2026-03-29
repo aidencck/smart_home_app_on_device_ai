@@ -1,0 +1,30 @@
+# Flutter & Dart
+.dart_tool/
+.packages
+build/
+pubspec.lock
+
+# Flutter plugins cache
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS files
+.DS_Store
+
+# Binaries and generated artifacts
+**/libllama_wrapper.so
+
+# Per-package ignores
+packages/**/.dart_tool/
+packages/**/build/
+packages/**/.flutter-plugins-dependencies
+packages/**/.flutter-plugins
+
+# Flutter ephemeral generated files
+ios/Flutter/ephemeral/
+windows/flutter/ephemeral/

@@ -1,5 +1,7 @@
 # 🏠 Smart Home On-Device AI Agent (端侧大模型智能管家)
 
+![Demo](docs/20260330004242_rec_.gif)
+
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg?logo=flutter)
 ![Dart](https://img.shields.io/badge/Dart-3.x-0175C2.svg?logo=dart)
 ![llama.cpp](https://img.shields.io/badge/llama.cpp-Edge_AI-orange.svg)
@@ -35,6 +37,8 @@ A next-generation Smart Home application demonstrating the **production-ready im
 *   **🧠 透明的“思维链”展示**：告别 AI 的黑盒。UI 实时渲染 Agent 的规划过程（意图识别 -> 本地 RAG 检索 -> 动态语法树生成 -> 指令执行）。
 *   **🔄 操作前后状态对比**：精准捕捉 AI 控制前后的 IoT 设备状态（例如：空调 `[关闭] ➔ [开启 (22°C)]`），在聊天气泡中提供极具安全感的状态反馈。
 *   **📊 极客性能看板**：在 Debug 模式下，每条指令下方会自动挂载性能追踪面板，展示 **端侧推理耗时** 和 **Tokens/s (生成吞吐量)**，为架构调优提供直观依据。
+
+ 
 
 ## 🏗 架构全景 (Architecture Overview)
 

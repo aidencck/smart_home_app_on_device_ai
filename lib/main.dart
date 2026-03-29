@@ -1906,11 +1906,16 @@ class _AgentScreenState extends State<AgentScreen> {
             beforeState = stateChanges['before'];
             afterState = stateChanges['after'];
             affectedDevices = [afterState!];
-          }
-          
-          responseText = "🤖 已为您执行：${intent.action == 'turn_on' ? '打开' : intent.action == 'turn_off' ? '关闭' : '调节'}了 ${afterState?['name'] ?? intent.deviceId}";
-          if (intent.value != null) {
-             responseText += " (参数: ${intent.value})";
+            
+            // 只有成功找到设备并改变状态才算真正执行成功
+            responseText = "🤖 已为您执行：${intent.action == 'turn_on' ? '打开' : intent.action == 'turn_off' ? '关闭' : '调节'}了 ${afterState['name'] ?? intent.deviceId}";
+            if (intent.value != null) {
+               responseText += " (参数: ${intent.value})";
+            }
+          } else {
+            // 解析到了意图，但是设备管理器里没找到这个设备，可能只是想打开当前界面里的某个大类设备（如：有点冷->开空调）
+            // 抛出异常走 Fallback 模糊意图降级体验
+            throw Exception("Exact device not found by ID: ${intent.deviceId}, fallback to fuzzy match");
           }
         } else {
           // RAG 或纯回复
@@ -1947,6 +1952,12 @@ class _AgentScreenState extends State<AgentScreen> {
         int temp = text.contains("高一点") ? 28 : 26;
         await deviceManager.setDeviceState("空调", true, temperature: temp);
         affectedDevices = deviceManager.getDevicesByName("空调");
+        if (affectedDevices.isNotEmpty) {
+           afterState = affectedDevices.first; // 给 Fallback 补充状态对比卡片数据
+           // 为了构造 UI 需要的 beforeState 假数据
+           beforeState = Map<String, dynamic>.from(afterState);
+           beforeState['on'] = false;
+        }
         responseText = text.contains("高一点")
             ? "🤖 已为您将空调温度调高到 $temp 度。"
             : "🤖 已为您将空调打开并调至 $temp 度。";
@@ -1958,12 +1969,22 @@ class _AgentScreenState extends State<AgentScreen> {
         bool isTurningOn = !text.contains("关");
         await deviceManager.setDeviceState("灯", isTurningOn);
         affectedDevices = deviceManager.getDevicesByName("灯");
+        if (affectedDevices.isNotEmpty) {
+           afterState = affectedDevices.first;
+           beforeState = Map<String, dynamic>.from(afterState);
+           beforeState['on'] = !isTurningOn;
+        }
         responseText = isTurningOn ? "🤖 已为您调节灯光。" : "🤖 已为您关灯。";
         _agent.contextProvider.addMessage('user', text);
         _agent.contextProvider.addMessage('agent', responseText);
       } else if (text.contains("打扫") || text.contains("扫地")) {
         await deviceManager.setDeviceState("扫地", true);
         affectedDevices = deviceManager.getDevicesByName("扫地");
+        if (affectedDevices.isNotEmpty) {
+           afterState = affectedDevices.first;
+           beforeState = Map<String, dynamic>.from(afterState);
+           beforeState['on'] = false;
+        }
         responseText = "🤖 已为您启动扫地机器人开始全屋清扫。";
         _agent.contextProvider.addMessage('user', text);
         _agent.contextProvider.addMessage('agent', responseText);
@@ -2015,6 +2036,11 @@ class _AgentScreenState extends State<AgentScreen> {
           if (text.contains("看电影")) ...deviceManager.getDevicesByName("灯"),
           if (text.contains("看电影")) ...deviceManager.getDevicesByName("窗帘"),
         ];
+        if (affectedDevices.isNotEmpty && !text.contains("看电影")) {
+           afterState = affectedDevices.first;
+           beforeState = Map<String, dynamic>.from(afterState);
+           beforeState['on'] = !isTurningOn;
+        }
         responseText = text.contains("看电影")
             ? "🤖 已为您开启观影模式：打开电视，关闭灯光和窗帘。"
             : (isTurningOn ? "🤖 已为您打开电视。" : "🤖 已为您关闭电视。");
