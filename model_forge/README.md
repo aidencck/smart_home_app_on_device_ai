@@ -3,6 +3,9 @@
 > **"Software is eating the world, but AI is eating software."**
 > 这里是智能家居端侧大模型（On-Device LLM）的专属训练、量化与定制车间。
 
+## 📚 核心文档
+* 📖 **[端侧模型深度定制与全链路微调方案 (架构师视角)](on_device_model_customization_pipeline.md)**
+
 ## 🎯 目录定位 (Why this directory?)
 
 `model_forge` 是一个与主 Flutter 项目**完全解耦**的 Python 生态空间。
