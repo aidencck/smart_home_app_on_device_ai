@@ -6,6 +6,8 @@
 ## 📚 核心文档
 * 📖 **[端侧模型深度定制与全链路微调方案 (架构师视角)](on_device_model_customization_pipeline.md)**
 * 🛠️ **[Mac M4 端侧模型微调与量化复现 SOP (标准作业程序)](mac_m4_reproduction_sop.md)**
+* 🧪 **[数据评估体系与合成规则逆向推导](data_evaluation_and_synthesis_rules.md)**
+* 📊 **[智能家居端侧模型：数据评估与验收体系指南](data_evaluation_and_acceptance_framework.md)**
 * 🔄 **[智能家居端侧模型业务扩展与迭代 SOP](business_expansion_model_iteration_sop.md)**
 
 ## 🎯 目录定位 (Why this directory?)
