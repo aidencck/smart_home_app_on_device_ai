@@ -123,4 +123,24 @@ gh issue create --title "部署 FSR 与 IEM 评测脚本" --label "enhancement, 
 gh issue create --title "完善 M4 Mac 上的 MLX/LoRA 自动化训练脚本" --label "enhancement, ai" --body "优化 \`run_train.sh\`，使其充分利用 Apple Silicon 的统一内存架构进行高效 LoRA 微调。属于 Epic: $PHASE5_EPIC"
 gh issue create --title "开发模型转 GGUF 格式及量化流水线" --label "enhancement, ai" --body "将微调后的模型自动合并权重、转换为 GGUF 格式，并进行 q4_k_m 级别的量化，以供端侧使用。属于 Epic: $PHASE5_EPIC"
 
+# --- Phase 6: 代码库技术债清理与基础设施完善 (Tech Debt) ---
+echo "Creating Phase 6 Epic..."
+PHASE6_EPIC=$(gh issue create --title "[EPIC] Phase 6: 代码库技术债清理与基础设施完善" \
+  --label "epic, tech-debt" \
+  --body "## 🎯 Epic 概述
+在核心代码库扫描中发现的遗留 TODOs 和未完全实现的模块闭环，主要集中在端侧引擎的降级处理和设备状态映射上。
+
+## 📋 包含的子任务
+- [ ] 完善 Llama.cpp Isolate 通信层中的流式 token callback 映射
+- [ ] 补全端侧硬件探针降级时的可用内存精准获取逻辑
+- [ ] 移除或修复 \`llama.cpp/src\` 中未解决的 C++ 内存泄漏 TODOs
+
+## 验收标准
+- [ ] \`llama_engine.dart\` 中的 \`TODO\` 和 \`print\` 调试语句被全部清理
+- [ ] 异常情况下的兜底云端策略能够稳定触发")
+echo "Created: $PHASE6_EPIC"
+
+gh issue create --title "完善 Llama.cpp Isolate 通信层中的流式 token callback 映射" --label "bug, flutter" --body "在 \`packages/on_device_agent/lib/src/engine/llama_cpp/llama_engine.dart\` 中，真正的 Llama.cpp 支持 token by token 的流式回调。目前只是在模拟，需要将 C++ callback 通过 SendPort 实时传递给主线程以降低 TTFT。属于 Epic: $PHASE6_EPIC"
+gh issue create --title "补全端侧硬件探针降级时的可用内存精准获取逻辑" --label "enhancement, flutter" --body "在 \`llama_engine.dart\` 的内存探针中，目前只写了简单的模拟阈值判断。需要接入 \`system_info\` 等插件，精准获取设备当前可用 RAM，并在不足时平滑降级到云端模型。属于 Epic: $PHASE6_EPIC"
+
 echo "✅ All Epics and Issues have been created! They should automatically appear in your GitHub Project Board."
