@@ -11,6 +11,10 @@
 [![License](https://img.shields.io/badge/License-MIT-success.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
+A next-generation Smart Home application demonstrating the **production-ready implementation of On-Device AI + Agent architecture**. Powered by `llama.cpp` through Dart FFI and a lightweight local RAG (Retrieval-Augmented Generation) system.
+
+这是一个致力于探索和展示 **“端侧大模型 + Agent” 真实落地能力** 的智能家居开源项目。它彻底抛弃了纯云端 API 的重度依赖，在移动设备本地完成了从自然语言理解、意图规划到 IoT 硬件控制的完整 Agent 闭环，并辅以轻量级云端兜底，构建了完整的端云协同体系。
+
 ## 📑 目录 (Table of Contents)
 - [快速指引 (Role-based Entry Points)](#-快速指引-role-based-entry-points)
 - [商业洞察与产品愿景 (Business & Product Vision)](#-商业洞察与产品愿景-business--product-vision)
@@ -50,10 +54,6 @@
 * [智能家居端侧模型：数据评估与验收体系指南](model_forge/data_evaluation_and_acceptance_framework.md)
 * [智能家居端侧模型业务扩展与迭代 SOP](model_forge/business_expansion_model_iteration_sop.md)
 * [Model Forge 目录说明](model_forge/README.md)
-
-A next-generation Smart Home application demonstrating the **production-ready implementation of On-Device AI + Agent architecture**. Powered by `llama.cpp` through Dart FFI and a lightweight local RAG (Retrieval-Augmented Generation) system.
-
-这是一个致力于探索和展示 **“端侧大模型 + Agent” 真实落地能力** 的智能家居开源项目。它彻底抛弃了纯云端 API 的重度依赖，在移动设备本地完成了从自然语言理解、意图规划到 IoT 硬件控制的完整 Agent 闭环，并辅以轻量级云端兜底，构建了完整的端云协同体系。
 
 ---
 
