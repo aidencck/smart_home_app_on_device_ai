@@ -56,20 +56,34 @@ A next-generation Smart Home application demonstrating the **production-ready im
 
 ## 📚 项目文档 (Documentation)
 
+### 1. 核心产品与战略 (Business & Strategy)
 * [🌌 产品迭代愿景：从“被动控制”到“无感智能” (Zero-UI Platform)](docs/product_vision_ice.md)
+* [开源协同与敏捷项目管理指南](docs/agile_project_management.md)
+
+### 2. 架构设计与技术落地 (Architecture & Engineering)
 * [智能家居端侧 AI Agent 架构复盘与落地能力指南](docs/honest_architecture_reflection.md)
+* [智能家居端侧 AI Agent 架构复盘与落地能力指南（版本二）](docs/on_device_ai_architecture_review.md)
 * [智能家居端云协同架构落地方案 (基于 FastAPI) - 研发工程评审版](docs/fastapi_edge_cloud_architecture.md)
+* [智能家居端云协同 AI 架构设计方案](docs/edge_cloud_collaborative_architecture.md)
+* [🔗 **[New]** 智能家居 Matter 协议生态接入架构方案 (Matter Integration)](backend/docs/matter_integration_architecture.md)
+* [🔗 **[New]** 后端核心架构设计与演进路线 (Backend Architecture & Roadmap)](backend/docs/architecture.md)
+* [🔗 **[New]** 后端基建规划与 DDD 落地指南 (Infrastructure Design)](backend/docs/infrastructure_design.md)
+* [🔗 **[New]** 架构演进路线与遗留任务清单 (Architecture Roadmap)](backend/docs/architecture_roadmap.md)
+
+### 3. 规范、运维与审计 (Standards, DevOps & Audit)
+* [🔗 **[New]** 后端 API 规范与全局异常处理标准 (API Standards)](backend/docs/api_standards.md)
+* [🔗 **[New]** Docker 容器化与开发环境配置指南 (Docker Guide)](backend/docs/docker_development_guide.md)
+* [🔗 **[New]** 后端并发防御架构与代码质量审计报告 (Architecture Audit)](backend/docs/code_review_and_architecture_audit.md)
 * [智能家居 AI 系统端到端隐私合规与数据安全方案](docs/ai_privacy_compliance_guidelines.md)
 * [端云协同 AI 系统数据地图与验证指导体系](docs/data_map_and_qa_lineage.md)
-* [智能家居端云协同 AI 架构设计方案](docs/edge_cloud_collaborative_architecture.md)
-* [智能家居端侧 AI Agent 架构复盘与落地能力指南（版本二）](docs/on_device_ai_architecture_review.md)
+
+### 4. 数据与模型工程 (Data & Model Ops)
 * [端侧模型深度定制与全链路微调方案 (架构师视角)](model_forge/on_device_model_customization_pipeline.md)
-* [Mac M4 端侧模型微调与量化复现 SOP](model_forge/mac_m4_reproduction_sop.md)
 * [数据评估体系与合成规则逆向推导](model_forge/data_evaluation_and_synthesis_rules.md)
-* [智能家居端侧模型：数据评估与验收体系指南](model_forge/data_evaluation_and_acceptance_framework.md)
 * [智能家居端侧模型业务扩展与迭代 SOP](model_forge/business_expansion_model_iteration_sop.md)
+* [Mac M4 端侧模型微调与量化复现 SOP](model_forge/mac_m4_reproduction_sop.md)
+* [智能家居端侧模型：数据评估与验收体系指南](model_forge/data_evaluation_and_acceptance_framework.md)
 * [Model Forge 目录说明](model_forge/README.md)
-* [开源协同与敏捷项目管理指南](docs/agile_project_management.md)
 
 ---
 
