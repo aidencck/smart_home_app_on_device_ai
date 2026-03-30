@@ -1,6 +1,6 @@
 # 🏠 Smart Home On-Device AI Agent (端侧大模型智能管家)
 
-![Demo](docs/20260330004242_rec_.gif)
+<img src="docs/20260330004242_rec_.gif" width="50%" alt="Demo" />
 
 ![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg?logo=flutter)
 ![Dart](https://img.shields.io/badge/Dart-3.x-0175C2.svg?logo=dart)
