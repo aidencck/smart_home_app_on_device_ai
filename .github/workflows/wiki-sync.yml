@@ -1,0 +1,27 @@
+name: Sync Docs to Wiki
+
+on:
+  push:
+    branches:
+      - main
+      - master
+    paths:
+      - 'docs/**'
+      - 'model_forge/**'
+      - 'README.md'
+      - 'CONTRIBUTING.md'
+      - '.github/scripts/sync_wiki.sh'
+
+jobs:
+  update-wiki:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Sync to Wiki
+        env:
+          GH_PAT: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x .github/scripts/sync_wiki.sh
+          .github/scripts/sync_wiki.sh
