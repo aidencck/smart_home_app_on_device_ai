@@ -15,6 +15,21 @@ A next-generation Smart Home application demonstrating the **production-ready im
 
 这是一个致力于探索和展示 **“端侧大模型 + Agent” 真实落地能力** 的智能家居开源项目。它彻底抛弃了纯云端 API 的重度依赖，在移动设备本地完成了从自然语言理解、意图规划到 IoT 硬件控制的完整 Agent 闭环，并辅以轻量级云端兜底，构建了完整的端云协同体系。
 
+---
+
+## 🌍 战略规划概览 (Strategic Overview)
+
+作为智能家居赛道的颠覆者，我们洞察到当前市场的核心痛点：**云端 AI 无法兼顾“极度隐私”、“毫秒级低延迟”与“零幻觉硬件控制”**。本项目立足于以下三大战略支柱，旨在重新定义未来十年的家庭数字生命：
+
+1. **隐私即服务 (Privacy as a Service)**：
+   家是最私密的空间。我们将最敏感的上下文（对话、作息、传感器数据）锁定在**本地端侧大模型**内闭环处理。只有经过 NER 强脱敏且用户显式 Opt-in 的长尾指令才允许上云。隐私不是口号，而是被硬编码在架构底层的物理隔离。
+2. **端云协同的算力路由 (Edge-Cloud AI Routing)**：
+   不盲目追求纯端侧，也不过度依赖云端。通过首创的“意图解耦 (Intent Splitting)”与“语义缓存 (Semantic Cache)”，让端侧 0.5B-2B 模型处理 80% 的高频指令（如控灯），让云端 vLLM/OpenAI 处理 20% 的复杂认知。实现**成本、延迟与智商的完美三角平衡**。
+3. **数据飞轮驱动的主动智能 (Data-Driven Proactive AI)**：
+   超越“一问一答”的被动声控时代。通过云端的 `LLM-as-a-Judge` 异步清洗端侧上报的失效日志 (Bad Cases)，持续提炼高质量 SFT 训练集，结合 OTA 动态下发，让每一个家庭的 AI 都在自我进化，最终实现“预判你所想”的 **Zero-UI 无感交互**。
+
+---
+
 ## 📑 目录 (Table of Contents)
 - [快速指引 (Role-based Entry Points)](#-快速指引-role-based-entry-points)
 - [商业洞察与产品愿景 (Business & Product Vision)](#-商业洞察与产品愿景-business--product-vision)
