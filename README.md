@@ -466,27 +466,39 @@ We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for 
 
 ---
 
-## 📋 核心 Todo 清单 (Roadmap)
+## 📋 核心演进路线 (Roadmap & Projects)
 
-基于目前的架构蓝图，项目接下来的核心演进与落地任务如下：
+本项目的开发节奏与任务分配已全面迁移至 **GitHub Projects** 进行敏捷管理。你可以通过以下链接实时查看我们的开发进度、认领任务或参与架构讨论：
 
-### Phase 1: FastAPI 端云协同底座搭建
-- [ ] **初始化 FastAPI 后端脚手架**：包含 Pydantic v2 全局校验与 JWT 鉴权中间件。
-- [ ] **重构设备影子 (Device Shadow)**：基于 Redis Cluster 实现状态增量更新，引入 Vector Clock 时间戳校验机制。
-- [ ] **端云防竞态处理**：在 Flutter 端实现 Command ID 拦截器，解决云端异步返回较慢导致的“幽灵播报”。
-- [ ] **高危设备 0s TTL 探针**：针对安防设备开发主动拉取状态的 MQTT 极速通道。
+👉 **[查看完整的研发看板 (GitHub Project Board) ↗](https://github.com/aidencck/smart_home_app_on_device_ai/projects)**
 
-### Phase 2: 隐私合规与大模型路由
-- [ ] **端侧前置脱敏管道**：在 Flutter 端接入轻量级 NER 引擎，上云前剥离姓名、地址等个人标识符 (PII)。
-- [ ] **合规授权墙 (Opt-in UI)**：App 端开发极显眼的“体验改善计划”授权弹窗（非默认勾选），控制日志上传阀门。
-- [ ] **Semantic Cache 语义缓存**：在 FastAPI 路由层接入 Redis/Milvus，拦截高频通用指令以降低大模型冷启动延迟。
-- [ ] **大模型 Schema 对齐**：确保 vLLM 开启 `--guided-decoding-backend`，商业 API 启用 Structured Outputs。
+当前的研发重心（Epics）分为以下三个阶段：
 
-### Phase 3: 数据飞轮与模型演进
-- [ ] **LLM-as-a-Judge 清洗流水线**：开发 Celery Worker 消费脱敏日志，通过大模型进行二次隐私审查与质量打分。
-- [ ] **端侧意图解耦 (Intent Splitting)**：开发轻量级分类器，实现本地控制与云端长尾对话的 `par` 并行调度。
-- [ ] **OTA 动态分发策略**：开发基于 App `Version Code` 的模型强校验下发服务，杜绝跨版本模型导致推理 Crash。
-- [ ] **(预研) 联邦学习闭环**：探索将微调任务下发至端侧计算梯度的技术路径。
+### Phase 1: FastAPI 端云协同底座搭建 (🎯 正在进行)
+*   **Epic**: 构建高可用、防并发竞态的云端微服务，作为端侧 Agent 的坚实后盾。
+*   **Key Issues**:
+    *   `#1` 初始化 FastAPI 后端脚手架 (Pydantic v2 & JWT)
+    *   `#2` 基于 Redis Cluster 重构设备影子 (Vector Clock 机制)
+    *   `#3` Flutter 端 Command ID 拦截器 (防幽灵播报)
+    *   `#4` 安防高危设备 0s TTL MQTT 探针
+
+### Phase 2: 隐私合规与大模型路由 (🗓️ 计划中)
+*   **Epic**: 建立严格的数据脱敏管道与意图分发网络。
+*   **Key Issues**:
+    *   `#5` 端侧轻量级 NER 前置脱敏引擎
+    *   `#6` App 端合规授权墙 (Opt-in UI) 开发
+    *   `#7` FastAPI 路由层 Semantic Cache (Redis/Milvus)
+    *   `#8` vLLM 与商业 API 的 Structured Outputs 对齐
+
+### Phase 3: 数据飞轮与模型演进 (🚀 长期愿景)
+*   **Epic**: 打造可持续进化的“主动智能”模型底座。
+*   **Key Issues**:
+    *   `#9` LLM-as-a-Judge 脱敏日志二次清洗流水线 (Celery)
+    *   `#10` 端侧意图解耦 (Intent Splitting) 与并行调度器
+    *   `#11` 基于 Version Code 的 OTA 模型动态下发策略
+    *   `#12` (预研) 端侧微调与联邦学习架构探索
+
+> 💡 **参与贡献**：如果你对以上任何 Issue 感兴趣，欢迎在对应的 Issue 下留言认领。我们会为你分配任务并提供技术支持！
 
 ---
 
