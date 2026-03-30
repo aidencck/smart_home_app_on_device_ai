@@ -25,7 +25,7 @@
 
 ## 📚 项目文档 (Documentation)
 
-* [🧊 产品迭代愿景：从 "传统智能控制" 到 "Ice" (极致极简主义)](docs/product_vision_ice.md)
+* [🌌 产品迭代愿景：从“被动控制”到“无感智能” (Zero-UI Platform)](docs/product_vision_ice.md)
 * [智能家居端侧 AI Agent 架构复盘与落地能力指南](docs/honest_architecture_reflection.md)
 * [智能家居端云协同架构落地方案 (基于 FastAPI) - 研发工程评审版](docs/fastapi_edge_cloud_architecture.md)
 * [智能家居 AI 系统端到端隐私合规与数据安全方案](docs/ai_privacy_compliance_guidelines.md)
