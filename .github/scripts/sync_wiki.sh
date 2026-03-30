@@ -97,6 +97,11 @@ sed -i 's/model_forge\/data_evaluation_and_synthesis_rules.md/Data-Synthesis-Rul
 sed -i 's/model_forge\/data_evaluation_and_acceptance_framework.md/Evaluation-Framework/g' *.md || true
 sed -i 's/model_forge\/README.md/Model-Forge-Overview/g' *.md || true
 
+# Fix image links (convert docs/xxx.gif to raw github url) to prevent broken images
+echo "Fixing image links..."
+# This points directly to the main branch raw content for images
+sed -i "s|docs/\([a-zA-Z0-9_.-]*\.\(png\|jpg\|jpeg\|gif\|svg\|webp\)\)|https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/main/docs/\1|g" *.md || true
+
 # Commit and push changes
 git add .
 if git diff-index --quiet HEAD; then

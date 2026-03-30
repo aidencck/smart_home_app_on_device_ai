@@ -12,6 +12,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
 ## 📑 目录 (Table of Contents)
+- [快速指引 (Role-based Entry Points)](#-快速指引-role-based-entry-points)
 - [商业洞察与产品愿景 (Business & Product Vision)](#-商业洞察与产品愿景-business--product-vision)
 - [核心落地能力 (Why On-Device Agent?)](#-核心落地能力-why-on-device-agent)
 - [端云协同架构全景 (Edge-Cloud Architecture)](#-端云协同架构全景-edge-cloud-architecture)
@@ -20,6 +21,17 @@
 - [项目文档 (Documentation)](#-项目文档-documentation)
 - [数据与模型 (Data & Model Ops)](#-数据与模型评估复现与迭代-data--model-ops)
 - [致谢与社区 (Acknowledgements & Community)](#-致谢与社区-acknowledgements--community)
+
+---
+
+## 🧭 快速指引 (Role-based Entry Points)
+
+欢迎来到 Smart Home On-Device AI Agent 仓库！为了让你快速找到所需内容，请根据你的角色选择入口：
+
+* 👉 **我是移动端/Flutter 开发者**：你想了解如何在设备端本地运行大模型，请直接阅读 [端侧 AI Agent 架构复盘与落地能力指南](docs/honest_architecture_reflection.md) 和 [Llama.cpp 引擎入口代码](packages/on_device_agent/lib/src/engine/llama_cpp/llama_engine.dart)。
+* 👉 **我是模型/算法工程师**：你想了解我们如何进行高质量数据合成与端侧模型微调，请前往 [Model Forge 目录说明](model_forge/README.md) 并阅读 [数据合成黄金规则](model_forge/data_evaluation_and_synthesis_rules.md)。
+* 👉 **我是后端/云服务架构师**：你想了解高隐私要求的端云架构与防并发竞态设计，请深入阅读 [端云协同架构落地方案 (基于 FastAPI)](docs/fastapi_edge_cloud_architecture.md)。
+* 👉 **我是产品经理/业务操盘手**：你想了解这个项目的商业价值与终极愿景，请阅读 [产品迭代愿景：从“被动控制”到“无感智能”](docs/product_vision_ice.md)。
 
 ---
 
