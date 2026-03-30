@@ -49,3 +49,4 @@ model_forge/scripts/llama.cpp/
 model_forge/exports/**/*.gguf
 model_forge/data/**/*.jsonl
 model_forge/notebooks/.ipynb_checkpoints/
+packages/on_device_agent/ios/Classes/llama_cpp_src/
