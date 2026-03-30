@@ -33,6 +33,7 @@ cp "$GITHUB_WORKSPACE/docs/fastapi_edge_cloud_architecture.md" FastAPI-Backend-D
 cp "$GITHUB_WORKSPACE/docs/honest_architecture_reflection.md" Architecture-Reflection.md || true
 cp "$GITHUB_WORKSPACE/docs/ai_privacy_compliance_guidelines.md" Privacy-Compliance.md || true
 cp "$GITHUB_WORKSPACE/docs/data_map_and_qa_lineage.md" Data-Map-and-Lineage.md || true
+cp "$GITHUB_WORKSPACE/docs/agile_project_management.md" Agile-Project-Management.md || true
 
 # Check if ADR exists in the workspace
 if [ -f "$GITHUB_WORKSPACE/.trae/documents/ADR_001_OnDevice_AI_Architecture.md" ]; then
@@ -72,6 +73,7 @@ cat << 'EOF' > _Sidebar.md
 
 ### 👨‍💻 开发者 (Developers)
 * [[参与贡献|Contributing]]
+* [[敏捷项目管理指南|Agile-Project-Management]]
 EOF
 
 # Generate _Footer.md
@@ -90,6 +92,7 @@ sed -i 's/docs\/fastapi_edge_cloud_architecture.md/FastAPI-Backend-Design/g' *.m
 sed -i 's/docs\/honest_architecture_reflection.md/Architecture-Reflection/g' *.md || true
 sed -i 's/docs\/ai_privacy_compliance_guidelines.md/Privacy-Compliance/g' *.md || true
 sed -i 's/docs\/data_map_and_qa_lineage.md/Data-Map-and-Lineage/g' *.md || true
+sed -i 's/docs\/agile_project_management.md/Agile-Project-Management/g' *.md || true
 sed -i 's/docs\/edge_cloud_collaborative_architecture.md/Architecture-Overview/g' *.md || true
 sed -i 's/model_forge\/on_device_model_customization_pipeline.md/Customization-Pipeline/g' *.md || true
 sed -i 's/model_forge\/mac_m4_reproduction_sop.md/Reproduction-SOP/g' *.md || true

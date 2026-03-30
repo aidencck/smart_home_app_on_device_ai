@@ -54,6 +54,7 @@ A next-generation Smart Home application demonstrating the **production-ready im
 * [智能家居端侧模型：数据评估与验收体系指南](model_forge/data_evaluation_and_acceptance_framework.md)
 * [智能家居端侧模型业务扩展与迭代 SOP](model_forge/business_expansion_model_iteration_sop.md)
 * [Model Forge 目录说明](model_forge/README.md)
+* [开源协同与敏捷项目管理指南](docs/agile_project_management.md)
 
 ---
 
