@@ -1,5 +1,5 @@
 from app.schemas.device import DeviceShadowUpdate
-from app.core.exceptions import AppException, ErrorCode
+from app.core.exceptions import AppException, DeviceErrorCode
 from redis.asyncio import Redis
 from app.core.logger import logger
 
@@ -48,7 +48,7 @@ class DeviceService:
                 f"Request TS: {update_data.last_update_ts}. Rejecting update via Lua."
             )
             raise AppException(
-                code=ErrorCode.STATE_STALE,
+                code=DeviceErrorCode.STATE_STALE,
                 message="设备状态时间戳过期或乱序，更新被拒绝"
             )
         
