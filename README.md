@@ -22,7 +22,25 @@
 
 A next-generation Smart Home application demonstrating the **production-ready implementation of On-Device AI + Agent architecture**. Powered by `llama.cpp` through Dart FFI and a lightweight local RAG (Retrieval-Augmented Generation) system.
 
-这是一个致力于探索和展示 **“端侧大模型 + Agent” 真实落地能力** 的智能家居开源项目。它彻底抛弃了云端 API 的依赖，在移动设备本地完成了从自然语言理解、意图规划到 IoT 硬件控制的完整 Agent 闭环。
+这是一个致力于探索和展示 **“端侧大模型 + Agent” 真实落地能力** 的智能家居开源项目。它彻底抛弃了纯云端 API 的重度依赖，在移动设备本地完成了从自然语言理解、意图规划到 IoT 硬件控制的完整 Agent 闭环，并辅以轻量级云端兜底，构建了完整的端云协同体系。
+
+---
+
+## 🎯 业务与产品目标 (Business & Product Goals)
+
+在当前的智能家居生态中，高度依赖云端不仅带来了高昂的服务器计算成本，更引发了用户对家庭隐私泄露的深度焦虑。此外，遇到弱网或断网环境时，智能设备往往沦为“智障”。本项目正是为了打破这一行业僵局而生。
+
+### 💼 业务目标 (Business Goals)
+1. **破局隐私信任危机**：通过“本地优先 (Local-First)”的端云架构，打造绝对隐私安全的智能家居标杆，以此作为核心卖点（USP）抢占对隐私极度敏感的高端市场。
+2. **大幅削减云端成本**：将 >80% 的高频硬件控制指令拦截在端侧由 0.5B 小模型处理，极大降低云端商业大模型 API 的调用成本与高并发下的服务器扩容压力。
+3. **构建私有数据壁垒**：依靠“非默认勾选的显式授权 (Opt-in) + 脱敏清洗”的数据飞轮，合规地沉淀高质量垂域日志，持续迭代属于企业自身的行业专属大模型。
+4. **合规出海与全球化**：从底层架构上原生满足 GDPR (欧洲)、PIPL (中国) 等严苛的数据保护法，为智能家居产品的全球化出海扫清合规障碍。
+
+### 📱 产品目标 (Product Goals)
+1. **极致的响应速度 (Zero Latency)**：消除云端往返的网络延迟，实现设备控制的毫秒级响应，让语音/文本的 AI 控制像按下物理开关一样迅速、符合直觉。
+2. **断网可用 (Always Available)**：在断网或弱网环境下，依然能保证核心家居设备（如照明、温控、安防）的本地 AI 智能控制与规则联动。
+3. **零幻觉的物理控制 (Zero Hallucination)**：通过 GBNF 语法树与动态 Context 注入，确保大模型输出 100% 格式正确的 JSON 控制指令，杜绝“乱开门锁”等危险的 AI 幻觉操作。
+4. **自然的复合交互 (Natural Interaction)**：支持诸如“把灯关了顺便问问明天天气”等复杂长尾意图，通过端云并发调度 (Intent Splitting)，提供无缝、拟人化的全能管家体验。
 
 ---
 
