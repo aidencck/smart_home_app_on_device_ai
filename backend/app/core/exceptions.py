@@ -5,29 +5,38 @@ from typing import Any, Dict, Optional
 from app.core.logger import logger
 from enum import Enum
 
-class ErrorCode(int, Enum):
+class BaseErrorCode(int, Enum):
     """
-    统一业务错误码字典 (Business Error Codes)
-    10xx: 用户/权限相关错误
-    20xx: 业务逻辑错误
-    30xx: 外部依赖/设备相关错误
+    基础错误码枚举基类
+    不要在这里直接堆砌所有的业务错误码，避免合并冲突。
+    各业务模块应该继承此类定义自己的专属错误码。
     """
-    # 通用错误
+    # 基础通用错误 (400~500段)
     BAD_REQUEST = 400
     UNAUTHORIZED = 401
     FORBIDDEN = 403
     NOT_FOUND = 404
     INTERNAL_SERVER_ERROR = 500
-    
-    # 业务特有错误
+
+class AuthErrorCode(BaseErrorCode):
+    """用户与鉴权模块错误码 (10xx)"""
     USER_NOT_EXIST = 1001
     PASSWORD_ERROR = 1002
     TOKEN_EXPIRED = 1003
-    
+
+class DeviceErrorCode(BaseErrorCode):
+    """设备协同模块错误码 (30xx)"""
     DEVICE_OFFLINE = 3001
     DEVICE_TIMEOUT = 3002
     STATE_STALE = 3003 # 状态过期 (Vector Clock mismatch)
-    AI_RATE_LIMIT = 3004
+
+class AIErrorCode(BaseErrorCode):
+    """AI 与大模型模块错误码 (40xx)"""
+    AI_RATE_LIMIT = 4001
+    PROMPT_INJECTION_DETECTED = 4002
+
+# 兼容老代码的别名，防止破坏现有逻辑
+ErrorCode = BaseErrorCode
 
 class AppException(Exception):
     def __init__(

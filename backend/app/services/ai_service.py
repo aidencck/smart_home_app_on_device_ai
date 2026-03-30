@@ -6,7 +6,7 @@ from typing import Optional
 from redis.asyncio import Redis
 from openai import AsyncOpenAI
 from app.schemas.ai import ChatRequest, ChatResponseData, CommandAction, ModelResponseFormat
-from app.core.exceptions import AppException, ErrorCode
+from app.core.exceptions import AppException, BaseErrorCode, DeviceErrorCode
 from app.core.logger import logger
 from app.core.config import settings
 
@@ -32,7 +32,7 @@ class AIService:
         if not is_new_command:
             logger.warning(f"Duplicate request intercepted for command_id: {request.command_id}")
             raise AppException(
-                code=ErrorCode.BAD_REQUEST, 
+                code=BaseErrorCode.BAD_REQUEST, 
                 message="指令正在处理或已处理，请勿重复提交"
             )
             
@@ -44,7 +44,7 @@ class AIService:
                 if abs(current_ts - device.last_update_ts) > 60:
                     logger.warning(f"Device {device.device_id} context is stale/drifted. Triggering active probe.")
                     raise AppException(
-                        code=ErrorCode.STATE_STALE,
+                        code=DeviceErrorCode.STATE_STALE,
                         message=f"设备 {device.device_id} 状态快照已过期，请同步后重试"
                     )
             
@@ -117,4 +117,10 @@ class AIService:
             # 否则用户在接下来的 24 小时内（原为 300s）将无法重试该指令
             await redis.delete(idempotency_key)
             logger.error(f"Error processing command, idempotency lock released for {request.command_id}")
-            raise e
+            if isinstance(e, AppException):
+                raise e
+            logger.error(f"LLM API Error: {str(e)}", exc_info=True)
+            raise AppException(
+                code=BaseErrorCode.INTERNAL_SERVER_ERROR,
+                message="云端 AI 大脑暂时无法响应，请稍后再试"
+            )
