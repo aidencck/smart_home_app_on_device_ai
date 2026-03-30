@@ -1,0 +1,120 @@
+services:
+  # FastAPI Backend Service
+  api:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: smarthome_api
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    volumes:
+      # 将当前目录挂载到容器，实现代码热重载，避免污染宿主机
+      - .:/app
+      - /app/__pycache__
+      - /app/.venv
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_SERVER=db
+      - REDIS_HOST=redis
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - smarthome_network
+
+  # PostgreSQL Database Service
+  db:
+    image: docker.m.daocloud.io/library/postgres:15-alpine
+    container_name: smarthome_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-smarthome_db}
+      TZ: Asia/Shanghai
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres} -d ${POSTGRES_DB:-smarthome_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - smarthome_network
+
+  # Redis Cache & Shadow Service
+  redis:
+    image: docker.m.daocloud.io/library/redis:7.0.15-alpine
+    container_name: smarthome_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-redis_secret}
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-redis_secret}", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - smarthome_network
+
+  # RabbitMQ Message Broker
+  rabbitmq:
+    image: docker.m.daocloud.io/library/rabbitmq:3.13-management-alpine
+    container_name: smarthome_rabbitmq
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672" # UI 管理界面
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-guest}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS:-guest}
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - smarthome_network
+
+  # Celery Worker for LLM-as-a-Judge
+  celery_worker:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: smarthome_celery_worker
+    restart: unless-stopped
+    command: celery -A app.worker.celery_app worker --loglevel=info
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_SERVER=db
+      - REDIS_HOST=redis
+      - RABBITMQ_URL=amqp://${RABBITMQ_USER:-guest}:${RABBITMQ_PASS:-guest}@rabbitmq:5672//
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - smarthome_network
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  smarthome_network:
+    driver: bridge
