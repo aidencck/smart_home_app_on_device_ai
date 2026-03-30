@@ -12,5 +12,5 @@ jobs:
       - uses: actions/add-to-project@v0.5.0
         with:
           # You can update this project-url to your actual GitHub Project URL once created
-          project-url: https://github.com/users/${{ github.repository_owner }}/projects/1
+          project-url: https://github.com/users/${{ github.repository_owner }}/projects/2
           github-token: ${{ secrets.GITHUB_TOKEN }}
