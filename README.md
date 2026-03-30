@@ -391,6 +391,32 @@ The application includes a built-in profiler available only in `kDebugMode`. Whe
 
 We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
 
+---
+
+## 📋 核心 Todo 清单 (Roadmap)
+
+基于目前的架构蓝图，项目接下来的核心演进与落地任务如下：
+
+### Phase 1: FastAPI 端云协同底座搭建
+- [ ] **初始化 FastAPI 后端脚手架**：包含 Pydantic v2 全局校验与 JWT 鉴权中间件。
+- [ ] **重构设备影子 (Device Shadow)**：基于 Redis Cluster 实现状态增量更新，引入 Vector Clock 时间戳校验机制。
+- [ ] **端云防竞态处理**：在 Flutter 端实现 Command ID 拦截器，解决云端异步返回较慢导致的“幽灵播报”。
+- [ ] **高危设备 0s TTL 探针**：针对安防设备开发主动拉取状态的 MQTT 极速通道。
+
+### Phase 2: 隐私合规与大模型路由
+- [ ] **端侧前置脱敏管道**：在 Flutter 端接入轻量级 NER 引擎，上云前剥离姓名、地址等个人标识符 (PII)。
+- [ ] **合规授权墙 (Opt-in UI)**：App 端开发极显眼的“体验改善计划”授权弹窗（非默认勾选），控制日志上传阀门。
+- [ ] **Semantic Cache 语义缓存**：在 FastAPI 路由层接入 Redis/Milvus，拦截高频通用指令以降低大模型冷启动延迟。
+- [ ] **大模型 Schema 对齐**：确保 vLLM 开启 `--guided-decoding-backend`，商业 API 启用 Structured Outputs。
+
+### Phase 3: 数据飞轮与模型演进
+- [ ] **LLM-as-a-Judge 清洗流水线**：开发 Celery Worker 消费脱敏日志，通过大模型进行二次隐私审查与质量打分。
+- [ ] **端侧意图解耦 (Intent Splitting)**：开发轻量级分类器，实现本地控制与云端长尾对话的 `par` 并行调度。
+- [ ] **OTA 动态分发策略**：开发基于 App `Version Code` 的模型强校验下发服务，杜绝跨版本模型导致推理 Crash。
+- [ ] **(预研) 联邦学习闭环**：探索将微调任务下发至端侧计算梯度的技术路径。
+
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
