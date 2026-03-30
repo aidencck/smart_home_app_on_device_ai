@@ -13,4 +13,4 @@ jobs:
         with:
           # You can update this project-url to your actual GitHub Project URL once created
           project-url: https://github.com/users/${{ github.repository_owner }}/projects/2
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.PROJECT_TOKEN }}
