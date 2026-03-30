@@ -110,8 +110,8 @@ A next-generation Smart Home application demonstrating the **production-ready im
 ### 核心设计原则 (First Principles)
 1. **极致隐私 (Privacy by Design)**: 默认本地闭环。复杂指令上云前强制 NER 脱敏剥离个人标识符，云端内存阅后即焚；飞轮数据收集严格遵循显式 Opt-in 强授权。
 2. **极速响应与防竞态 (Low Latency)**: 端侧拦截 >80% 日常请求；引入指令解耦 (Intent Splitting) 实现端云并行，结合 Command ID 防“幽灵播报”。
-3. **高危物理阻断 (Physical Safety)**: 门锁等高危设备采用 0s TTL 零缓存，涉及此类操作强制触发主动探针与本地生物认证墙。
-4. **协同进化 (Data Flywheel)**: 建立基于 LLM-as-a-Judge 的二次隐私清洗队列，提取高质量 SFT 负样本数据，并通过 OTA 动态反哺端侧模型。
+3. **工业级并发防御 (Concurrency Safety)**: 云端基于 Redis Lua 脚本实现 Check-and-Set 原子操作，彻底解决设备影子在弱网断连重发时的 TOCTOU (Time-of-Check to Time-of-Use) 并发覆写漏洞。
+4. **协同进化 (Data Flywheel)**: 建立基于 Celery + RabbitMQ 的异步清洗队列，利用 LLM-as-a-Judge 提取高质量 SFT 负样本数据，并通过 OTA 动态反哺端侧模型。
 
 ### 1. 业务流程与合规卡点 (Business Process Flow)
 展示从语音发起到设备响应的全生命周期，突出脱敏、认证与数据飞轮卡点。
@@ -328,7 +328,10 @@ sequenceDiagram
    利用 Flutter 的 `Isolate` 和 FFI 深度绑定 `llama.cpp`，确保端侧 2B 模型推理不阻塞主线程。在端云协同中，实现了 **意图复合切割 (Intent Splitting)**，支持本地控制指令与云端长尾推理并行处理，极大降低了用户体感延迟。
 
 4. **数据飞轮闭环：从模型评估到自动化微调**
-   包含完整的 `Model Forge` 数据工厂。不是简单的拼凑数据，而是基于业务指标逆向推导 **数据合成的 5 条黄金规则**。并配合云端 `LLM-as-a-Judge` 机制实现脱敏日志的自动化清洗、打分与 SFT 微调反馈，构建了可持续进化的智能底座。
+   包含完整的 `Model Forge` 数据工厂。不是简单的拼凑数据，而是基于业务指标逆向推导 **数据合成的 5 条黄金规则**。并配合云端 `RabbitMQ + Celery` 构建的 `LLM-as-a-Judge` 异步清洗管道，实现脱敏日志的自动化清洗、打分与 SFT 微调反馈，构建了可持续进化的智能底座。
+
+5. **工业级抗并发底座：彻底消除状态漂移**
+   摒弃了简单的读写模型，在 FastAPI 后端大量运用了高级并发防御机制：基于 `Hashlib SHA-256 + 状态签名` 的抗投毒语义缓存、基于 `Redis SETNX` 的分布式防重放锁，以及基于 `Lua 脚本原子操作` 的 Vector Clock 设备影子更新，保证了在极端弱网重试下的绝对数据一致性。
 
 ---
 
@@ -475,29 +478,29 @@ We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for 
 
 当前的研发重心（Epics）分为以下三个阶段：
 
-### Phase 1: FastAPI 端云协同底座搭建 (🎯 正在进行)
+### Phase 1: FastAPI 端云协同底座搭建 (✅ 已完成)
 *   **Epic**: 构建高可用、防并发竞态的云端微服务，作为端侧 Agent 的坚实后盾。
 *   **Key Issues**:
-    *   `#1` 初始化 FastAPI 后端脚手架 (Pydantic v2 & JWT)
-    *   `#2` 基于 Redis Cluster 重构设备影子 (Vector Clock 机制)
-    *   `#3` Flutter 端 Command ID 拦截器 (防幽灵播报)
-    *   `#4` 安防高危设备 0s TTL MQTT 探针
+    *   `#1` [✅] 初始化 FastAPI 后端脚手架 (Pydantic v2 & JWT)
+    *   `#2` [✅] 基于 Redis Lua 原子脚本重构设备影子 (Vector Clock 机制)
+    *   `#3` [✅] 云端引入基于 SETNX 的 Command ID 分布式防重放锁
+    *   `#4` [✅] 后端微服务 Docker 容器化编排 (PostgreSQL + Redis + API)
 
-### Phase 2: 隐私合规与大模型路由 (🗓️ 计划中)
+### Phase 2: 隐私合规与大模型路由 (🎯 正在进行)
 *   **Epic**: 建立严格的数据脱敏管道与意图分发网络。
 *   **Key Issues**:
-    *   `#5` 端侧轻量级 NER 前置脱敏引擎
-    *   `#6` App 端合规授权墙 (Opt-in UI) 开发
-    *   `#7` FastAPI 路由层 Semantic Cache (Redis/Milvus)
-    *   `#8` vLLM 与商业 API 的 Structured Outputs 对齐
+    *   `#5` [✅] FastAPI 路由层 Semantic Cache (引入上下文哈希签名防投毒)
+    *   `#6` [✅] vLLM/OpenAI 的 Structured Outputs 强制 JSON Schema 对齐
+    *   `#7` [🚧] 端侧轻量级 NER 前置脱敏引擎
+    *   `#8` [🚧] App 端合规授权墙 (Opt-in UI) 开发
 
 ### Phase 3: 数据飞轮与模型演进 (🚀 长期愿景)
 *   **Epic**: 打造可持续进化的“主动智能”模型底座。
 *   **Key Issues**:
-    *   `#9` LLM-as-a-Judge 脱敏日志二次清洗流水线 (Celery)
-    *   `#10` 端侧意图解耦 (Intent Splitting) 与并行调度器
-    *   `#11` 基于 Version Code 的 OTA 模型动态下发策略
-    *   `#12` (预研) 端侧微调与联邦学习架构探索
+    *   `#9` [✅] LLM-as-a-Judge 脱敏日志二次清洗流水线 (Celery + RabbitMQ)
+    *   `#10` [✅] 基于硬件算力与 Version Code 的 OTA 模型动态下发策略
+    *   `#11` [🚧] 端侧意图解耦 (Intent Splitting) 与并行调度器
+    *   `#12` [🚧] (预研) 端侧微调与联邦学习架构探索
 
 > 💡 **参与贡献**：如果你对以上任何 Issue 感兴趣，欢迎在对应的 Issue 下留言认领。我们会为你分配任务并提供技术支持！
 
