@@ -1,0 +1,23 @@
+# These owners will be the default owners for everything in the repo.
+*       @aiden
+
+# Order is important; the last matching pattern takes the most precedence.
+
+# Mobile (Flutter) Core
+/lib/                   @flutter-team
+/test/                  @flutter-team
+pubspec.yaml            @flutter-team
+android/                @mobile-platform-team
+ios/                    @mobile-platform-team
+macos/                  @mobile-platform-team
+windows/                @mobile-platform-team
+linux/                  @mobile-platform-team
+
+# AI/Backend Models
+/model_forge/           @ai-research-team
+/patch_devices.py       @ai-research-team
+/patch_dio.py           @ai-research-team
+
+# Scripts & DevOps
+/scripts/               @devops-team
+/.github/               @devops-team
