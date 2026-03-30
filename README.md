@@ -11,6 +11,8 @@
 ## 📚 项目文档 (Documentation)
 
 * [智能家居端侧 AI Agent 架构复盘与落地能力指南](docs/honest_architecture_reflection.md)
+* [智能家居端云协同架构落地方案 (基于 FastAPI) - 研发工程评审版](docs/fastapi_edge_cloud_architecture.md)
+* [智能家居 AI 系统端到端隐私合规与数据安全方案](docs/ai_privacy_compliance_guidelines.md)
 * [端侧模型深度定制与全链路微调方案 (架构师视角)](model_forge/on_device_model_customization_pipeline.md)
 * [Mac M4 端侧模型微调与量化复现 SOP](model_forge/mac_m4_reproduction_sop.md)
 * [数据评估体系与合成规则逆向推导](model_forge/data_evaluation_and_synthesis_rules.md)
@@ -39,6 +41,207 @@ A next-generation Smart Home application demonstrating the **production-ready im
 ### 3. ⚡ 异步隔离与毫秒级响应 (Isolate-Driven Edge Inference)
 *   **痛点**：在手机上跑 2B 级别的模型，极易导致主线程阻塞，造成 App 卡顿甚至 ANR。
 *   **落地实现**：基于 Dart 的 FFI 深度绑定 `llama.cpp` 源码，并将模型加载（Mmap）、Prompt 预处理和 Token 采样全部压入 **Dart Isolate (独立内存堆的后台线程)** 中。确保在进行繁重的张量计算时，Flutter UI 依然能保持丝滑的 60fps 帧率。
+
+## ☁️ 端云协同架构全景 (Edge-Cloud Architecture)
+
+本项目不仅包含强大的端侧引擎，更通过 **FastAPI 云端微服务** 打造了高隐私、低延迟的端云协同底座，兼顾物理控制的安全与长尾意图的智能。
+
+### 核心设计原则 (First Principles)
+1. **极致隐私 (Privacy by Design)**: 默认本地闭环。复杂指令上云前强制 NER 脱敏剥离个人标识符，云端内存阅后即焚；飞轮数据收集严格遵循显式 Opt-in 强授权。
+2. **极速响应与防竞态 (Low Latency)**: 端侧拦截 >80% 日常请求；引入指令解耦 (Intent Splitting) 实现端云并行，结合 Command ID 防“幽灵播报”。
+3. **高危物理阻断 (Physical Safety)**: 门锁等高危设备采用 0s TTL 零缓存，涉及此类操作强制触发主动探针与本地生物认证墙。
+4. **协同进化 (Data Flywheel)**: 建立基于 LLM-as-a-Judge 的二次隐私清洗队列，提取高质量 SFT 负样本数据，并通过 OTA 动态反哺端侧模型。
+
+### 1. 业务流程与合规卡点 (Business Process Flow)
+展示从语音发起到设备响应的全生命周期，突出脱敏、认证与数据飞轮卡点。
+```mermaid
+graph TD
+    Start([用户发起语音/文本指令]) --> A[端侧: ASR 转文本]
+    A --> B{是否触碰合规红线?}
+    B -->|"是 (高危/违规)"| C[端侧: 强制输出 action:none 拒答]
+    B -->|否| D{端侧: 意图复杂度评估}
+    
+    D -->|"简单/高频"| E1[注入动态设备快照 Dynamic Context]
+    E1 --> E[端侧 0.5B 模型本地纯闭环推理]
+    D -->|"复杂/长尾"| F[端侧: NER 隐私前置脱敏]
+    
+    F --> G[请求云端 FastAPI 网关]
+    G --> H{Semantic Cache 命中?}
+    
+    H -->|是| I[返回缓存的纯 JSON 指令]
+    H -->|否| J[云端大模型推理 仅限内存阅后即焚]
+    J --> I
+    
+    E --> K[合并纯 JSON 结果并验证严格格式]
+    I --> K
+    
+    K --> L{涉及高危物理设备?}
+    L -->|"是 (如门锁)"| M[触发 FaceID/生物认证墙]
+    M -->|失败| End_Fail([拒绝执行])
+    M -->|成功| N[Executor: 下发局域网控制指令]
+    L -->|否| N
+    
+    N --> O([设备响应并更新状态])
+    
+    O -.->|异步| P[更新本地 Isar 数据库 AES-256加密]
+    O -.->|"异步检查"| Q{用户是否显式 Opt-in 授权?}
+    Q -->|否| End_Ignore([静默丢弃 不留存数据])
+    Q -->|是| R[上传脱敏/匿名化 Bad Cases 进飞轮]
+```
+
+### 2. 产品与微服务架构 (Product Architecture)
+展示端侧重组件、云端微服务与物理终端的三层结构。
+```mermaid
+flowchart TB
+    subgraph edge ["端侧环境 (手机/中控屏)"]
+        direction TB
+        user_ui["Flutter UI层 (Opt-in强授权)"]
+        isolate_engine["Isolate 引擎 (JSON严格输出)"]
+        local_db[("Isar 数据库 (AES加密 30天TTL)")]
+        executor["设备执行器 (包含生物认证墙)"]
+    end
+
+    subgraph cloud ["云端环境 (阿里云/AWS)"]
+        direction TB
+        api_gateway["APISIX 网关"]
+        ai_router["FastAPI AI路由 (内存阅后即焚)"]
+        data_flywheel["FastAPI 数据飞轮"]
+        ota_service["FastAPI OTA 分发"]
+        
+        vllm["vLLM 私有兜底模型"]
+        enterprise_api["商业API 企业级无训练承诺"]
+        redis[("Redis 设备影子 0sTTL探针")]
+        celery["Celery Worker (包含Judge二次隐私过滤)"]
+    end
+
+    subgraph hardware ["物理设备环境"]
+        iot_devices["Matter/MQTT 智能设备"]
+    end
+
+    user_ui --> isolate_engine
+    isolate_engine --> local_db
+    isolate_engine --> executor
+    
+    user_ui --> api_gateway
+    api_gateway --> ai_router
+    api_gateway --> data_flywheel
+    api_gateway --> ota_service
+    
+    ai_router --> vllm
+    ai_router --> enterprise_api
+    ai_router --> redis
+    
+    data_flywheel --> celery
+    
+    executor --> iot_devices
+```
+
+### 3. 核心数据流转 (Core Data Flow)
+明确展示控制流、状态流以及带有强隐私隔离要求的数据飞轮流转路径。
+```mermaid
+flowchart LR
+    subgraph user_side [用户侧]
+        User[用户]
+    end
+    
+    subgraph edge_domain [端侧域 - 高隐私]
+        App[Flutter App_Opt-in校验]
+        DB[(Isar 数据库_AES256_30天滚动)]
+        NER[NER 脱敏与标识符剥离]
+        Model[端侧 0.5B 模型]
+    end
+    
+    subgraph cloud_domain [云端业务域]
+        API[FastAPI 内存网关_SessionID轮换]
+        Shadow[(Redis 影子_动态探针)]
+        vLLM[vLLM 或 Enterprise API]
+    end
+    
+    subgraph flywheel_domain [数据飞轮域 - 合规隔离]
+        Judge[LLM-as-a-Judge_二次隐私审查与质量过滤]
+        SFT[(包含负样本与长尾的 JSONL)]
+        Forge[Data Forge 模型合成]
+    end
+
+    %% 控制数据流
+    User -->|1. 语音指令_明文| App
+    App -->|2a. 本地快照注入| DB
+    DB -->|2b. 动态设备 Context| Model
+    App -->|3a. 复杂指令| NER
+    NER -->|3b. 剥离 PII 的匿名 Query| API
+    API -->|4. 最小化 Context 透传| vLLM
+    vLLM -->|5. 严格 JSON 控制指令| App
+    Model -->|5b. 严格 JSON 格式输出| App
+    
+    %% 状态数据流
+    App -->|6. 状态增量_带时间戳| Shadow
+    
+    %% 飞轮数据流
+    App -.->|7. 失败日志_强依赖 Opt-in 授权| API
+    API -.->|8. 临时 Session 关联日志| Judge
+    Judge -.->|9. 剔除噪音与遗漏 PII| SFT
+    SFT -.->|10. SFT或LoRA 微调| Forge
+    Forge -.->|11. OTA 分发新模型| Model
+    
+    style edge_domain fill:#e1f5fe,stroke:#3b82f6
+    style flywheel_domain fill:#ffebee,stroke:#ef5350,stroke-dasharray: 5 5
+```
+
+### 4. 关键交互时序 (Sequence Flow)
+展示复杂复合指令的端云并行处理与竞态防护机制。
+```mermaid
+sequenceDiagram
+    participant User
+    participant App as Flutter App
+    participant EdgeAI as Isolate Engine
+    participant Cloud as FastAPI Backend
+    participant CloudLLM as vLLM或OpenAI
+
+    User->>App: 语音或文本输入: 今天出门要带伞吗，顺便把灯关了
+    App->>App: Layer 1 规则引擎评估未命中
+    
+    %% 指令解耦逻辑
+    App->>App: 复合指令切割引擎
+    note right of App: 切割为: 1. 把灯关了 2. 今天出门要带伞吗
+    
+    par 并行处理本地指令
+        App->>App: 从 Isar 提取动态 Context
+        App->>EdgeAI: 启动本地推理 处理 把灯关了
+        EdgeAI-->>App: 返回严格 JSON 控制指令
+        App->>App: 触发高危指令拦截墙
+        App->>App: Action Executor 解析并下发局域网控制
+        App-->>User: UI 立刻反馈: 已为您关灯
+    and 并行处理云端请求
+        App->>App: NER 剥离 PII 标识符
+        App->>Cloud: POST /api/v1/ai/chat 带 Command ID
+        activate Cloud
+        Cloud->>Cloud: Vector Clock 校验设备影子新鲜度
+        alt 状态过期且涉及高危设备
+            Cloud->>App: 主动探针拉取状态 0s TTL
+        end
+        Cloud->>CloudLLM: 异步转发请求
+        CloudLLM-->>Cloud: 响应 严格格式 JSON
+        Cloud-->>App: 内存阅后即焚并返回结果
+        deactivate Cloud
+        App->>App: 校验 Command ID 是否已过期
+        App-->>User: UI 追加反馈: 另外今天有雨建议带伞
+    end
+
+    App->>Cloud: 异步 POST /api/v1/devices/shadow 更新设备状态
+    
+    %% 数据飞轮合规与评估链路
+    opt 若本次交互为 Bad Case
+        App->>App: 检查 Opt-in 体验改善计划授权
+        alt 已显式授权
+            App->>Cloud: POST /api/v1/data/telemetry
+            Cloud->>Cloud: Judge 二次隐私过滤与质量评估
+        else 未授权
+            App->>App: 静默丢弃 本地不留存
+        end
+    end
+```
+
+详细的 API 契约、管理层决策与 DevOps 部署方案，请参阅 [端云协同架构落地方案](./docs/fastapi_edge_cloud_architecture.md)。
 
 ---
 
