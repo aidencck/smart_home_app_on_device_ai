@@ -65,8 +65,9 @@ A next-generation Smart Home application demonstrating the **production-ready im
 * [智能家居端侧 AI Agent 架构复盘与落地能力指南（版本二）](docs/on_device_ai_architecture_review.md)
 * [智能家居端云协同架构落地方案 (基于 FastAPI) - 研发工程评审版](docs/fastapi_edge_cloud_architecture.md)
 * [智能家居端云协同 AI 架构设计方案](docs/edge_cloud_collaborative_architecture.md)
-* [🔗 **[New]** 端云协同大模型 AI Agent：全链路数据与部署架构解决方案](docs/full_lifecycle_ai_architecture_solution.md)
-* [🔗 **[New]** 智能家居 Matter 协议生态接入架构方案 (Matter Integration)](backend/docs/matter_integration_architecture.md)
+* [端云协同大模型 AI Agent：全链路数据与部署架构解决方案](docs/full_lifecycle_ai_architecture_solution.md)
+* [🔗 **[New]** 智能家居端云协同架构：商用化演进与盲区攻坚方案 (Architecture Evolution)](docs/architecture_evolution_and_blind_spots.md)
+* [智能家居 Matter 协议生态接入架构方案 (Matter Integration)](backend/docs/matter_integration_architecture.md)
 * [🔗 **[New]** 后端核心架构设计与演进路线 (Backend Architecture & Roadmap)](backend/docs/architecture.md)
 * [🔗 **[New]** 后端基建规划与 DDD 落地指南 (Infrastructure Design)](backend/docs/infrastructure_design.md)
 * [🔗 **[New]** 架构演进路线与遗留任务清单 (Architecture Roadmap)](backend/docs/architecture_roadmap.md)
@@ -543,6 +544,14 @@ We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for 
     *   `#10` [✅] 基于硬件算力与 Version Code 的 OTA 模型动态下发策略
     *   `#11` [🚧] 端侧意图解耦 (Intent Splitting) 与并行调度器
     *   `#12` [🚧] (预研) 端侧微调与联邦学习架构探索
+
+### Phase 4: 商用化演进与盲区攻坚 (🛡️ 规模化基石)
+*   **Epic**: 解决百万级设备在线的安全性、容错性与极端弱网可用性。
+*   **Key Issues**:
+    *   `#13` [🚧] OTA 增量更新与双槽位 (Dual-Slot) 灾难回滚机制
+    *   `#14` [🚧] 基于数字签名 (Ed25519) 的 GGUF 模型防篡改验签
+    *   `#15` [🚧] 引入边缘常驻网关 (Home Hub) 解决离家断网反向控制盲区
+    *   `#16` [🚧] 离线状态冷启动重同步与物理按键冲突仲裁机制
 
 > 💡 **参与贡献**：如果你对以上任何 Issue 感兴趣，欢迎在对应的 Issue 下留言认领。我们会为你分配任务并提供技术支持！
 
