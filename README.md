@@ -68,6 +68,7 @@ A next-generation Smart Home application demonstrating the **production-ready im
 * [端云协同大模型 AI Agent：全链路数据与部署架构解决方案](docs/full_lifecycle_ai_architecture_solution.md)
 * [🔗 **[New]** 智能家居端云协同架构：商用化演进与盲区攻坚方案 (Architecture Evolution)](docs/architecture_evolution_and_blind_spots.md)
 * [智能家居 Matter 协议生态接入架构方案 (Matter Integration)](backend/docs/matter_integration_architecture.md)
+* [🔗 **[New]** 智能家居 Matter 对接项目排期与研发任务清单 (Matter Delivery Plan)](docs/matter_integration_project_schedule_and_task_breakdown.md)
 * [🔗 **[New]** 后端核心架构设计与演进路线 (Backend Architecture & Roadmap)](backend/docs/architecture.md)
 * [🔗 **[New]** 后端基建规划与 DDD 落地指南 (Infrastructure Design)](backend/docs/infrastructure_design.md)
 * [🔗 **[New]** 架构演进路线与遗留任务清单 (Architecture Roadmap)](backend/docs/architecture_roadmap.md)
@@ -552,6 +553,15 @@ We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for 
     *   `#14` [🚧] 基于数字签名 (Ed25519) 的 GGUF 模型防篡改验签
     *   `#15` [🚧] 引入边缘常驻网关 (Home Hub) 解决离家断网反向控制盲区
     *   `#16` [🚧] 离线状态冷启动重同步与物理按键冲突仲裁机制
+
+### Phase 5: Matter 生态接入与商业化 MVP (🌐 跨品牌智能中枢)
+*   **Epic**: 将端侧 AI Agent 从“可理解”升级为“可控制跨品牌 Matter 设备”的家庭智能中枢。
+*   **Key Issues**:
+    *   `#17` [🚧] 原生 Matter SDK 桥接与 Flutter 统一领域模型封装
+    *   `#18` [🚧] 配网 Commissioning 闭环 (扫码 / 配对码 / 设备入库)
+    *   `#19` [🚧] Matter Controller 控制闭环与 Agent JSON 指令映射
+    *   `#20` [🚧] Subscribe 状态同步、本地缓存与云端影子一致性打通
+    *   `#21` [🚧] Matter 商业化 MVP 测试矩阵、试点发布与质量看板
 
 > 💡 **参与贡献**：如果你对以上任何 Issue 感兴趣，欢迎在对应的 Issue 下留言认领。我们会为你分配任务并提供技术支持！
 
