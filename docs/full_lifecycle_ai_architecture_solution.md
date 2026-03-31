@@ -114,6 +114,45 @@
 
 ---
 
-## 7. 总结
+## 7. 指标收集体系与监控看板模型搭建 (Telemetry & Dashboarding)
 
-本解决方案打通了从“硬件感知 → 本地推理 → 云端脱敏清洗 → 模型自动化微调 → GGUF 量化分发 → 端侧渲染执行”的完整技术脉络。这不仅仅是一个工程实践，更是构建智能家居行业**数据飞轮壁垒**的核心蓝图。
+光有指标定义还不够，我们需要一套无侵入、低延迟的工程链路，将端侧散落的数据汇聚到云端，并构建直观的 BI 监控看板，支撑产品和研发团队的决策。
+
+### 7.1 全链路指标采集架构 (Telemetry Pipeline)
+为避免阻塞核心业务流，指标采集遵循**“异步、批量、弱网容错”**原则。
+
+*   **端侧埋点与本地缓冲 (Edge Telemetry Agent)**：
+    *   在 Flutter 层封装统一的 `TelemetryService`，将交互事件（意图命中、TTFT、内存峰值、路由选择）封装为结构化 Event。
+    *   **Isar 本地缓冲池**：考虑到弱网环境，事件不直接发网，而是写入 Isar 数据库的 `telemetry_logs` 表，设定阈值（如每满 50 条或每 5 分钟）打包。
+*   **云端接入与流处理 (Cloud Ingestion)**：
+    *   **FastAPI 探针接口**：`/api/v1/telemetry/batch` 接收端侧的 GZIP 压缩上报数据。
+    *   **Kafka/RabbitMQ 削峰**：数据落地后立刻发送 Ack 释放端侧连接，后端利用 Celery 或 Kafka 消费队列进行异步清洗和结构化转换。
+*   **持久化与多维聚合 (Data Storage)**：
+    *   **ClickHouse / TimescaleDB**：针对海量时序埋点，选用列式数据库存储，支持按设备型号、模型版本、时间维度的极速 OLAP 聚合查询。
+
+### 7.2 监控看板模型设计 (Dashboard Modeling)
+基于收集到的数据，我们建议使用 **Grafana (偏工程监控)** 结合 **Apache Superset (偏业务 BI)** 搭建三层看板模型：
+
+#### 面板一：CEO / 产品大盘看板 (Business & ROI Dashboard)
+*   **核心图表**：
+    *   *全局端侧拦截率 (Gauge)*：直观展示当前多少比例的请求在本地完成（目标 80%）。
+    *   *云端 API 成本节省估算 (Stat/Trend)*：基于 Semantic Cache 和本地拦截，动态折算节省的 Token 费用（美元）。
+    *   *每日 Bad Case 自动化回收量 (Bar Chart)*：展示数据飞轮的运转健康度。
+
+#### 面板二：AI 算法演进看板 (Model Quality Dashboard)
+*   **核心图表**：
+    *   *各版本模型 FSR 与 IEM 对比 (Radar/Bar)*：横向对比 v1.0 与 v1.1 模型在真实用户环境中的意图解析成功率。
+    *   *Judge 清洗漏斗模型 (Funnel)*：展示端侧上报 -> Judge 初筛 -> 提取负样本 -> 进入 SFT 训练集的数据转化率。
+    *   *幻觉拦截监控 (Time Series)*：统计 OOD-R 越界拦截和设备上下文报错的触发频次。
+
+#### 面板三：工程稳定性与性能看板 (DevOps & Performance Dashboard)
+*   **核心图表**：
+    *   *TTFT 延迟分布热力图 (Heatmap)*：展示不同型号手机（如 iPhone 15 vs Android 低端机）的首次响应延迟分布。
+    *   *端侧内存 OOM 崩溃率监控 (Time Series)*：监控 Isolate 引擎是否因模型内存泄露导致 App 崩溃。
+    *   *FastAPI 与 Celery 队列积压水位 (Gauge/Graph)*：监控云端数据飞轮和 API 网关的并发健康度。
+
+---
+
+## 8. 总结
+
+本解决方案打通了从“硬件感知 → 本地推理 → 云端脱敏清洗 → 模型自动化微调 → GGUF 量化分发 → 端侧渲染执行”的完整技术脉络。辅以完善的“指标采集与多维监控看板”，这不仅仅是一个工程实践，更是构建智能家居行业**数据飞轮壁垒**的核心蓝图。
