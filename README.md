@@ -65,6 +65,7 @@ A next-generation Smart Home application demonstrating the **production-ready im
 * [智能家居端侧 AI Agent 架构复盘与落地能力指南（版本二）](docs/on_device_ai_architecture_review.md)
 * [智能家居端云协同架构落地方案 (基于 FastAPI) - 研发工程评审版](docs/fastapi_edge_cloud_architecture.md)
 * [智能家居端云协同 AI 架构设计方案](docs/edge_cloud_collaborative_architecture.md)
+* [🔗 **[New]** 端云协同大模型 AI Agent：全链路数据与部署架构解决方案](docs/full_lifecycle_ai_architecture_solution.md)
 * [🔗 **[New]** 智能家居 Matter 协议生态接入架构方案 (Matter Integration)](backend/docs/matter_integration_architecture.md)
 * [🔗 **[New]** 后端核心架构设计与演进路线 (Backend Architecture & Roadmap)](backend/docs/architecture.md)
 * [🔗 **[New]** 后端基建规划与 DDD 落地指南 (Infrastructure Design)](backend/docs/infrastructure_design.md)
