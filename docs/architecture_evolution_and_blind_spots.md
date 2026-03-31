@@ -95,22 +95,22 @@ flowchart LR
 ### 3.3 架构重构图
 ```mermaid
 flowchart TB
-    subgraph Cloud [云端微服务]
-        FastAPI[API Gateway]
-        Flywheel[数据飞轮/定时任务]
+    subgraph Cloud ["云端微服务"]
+        FastAPI["API Gateway"]
+        Flywheel["数据飞轮/定时任务"]
     end
 
-    subgraph Home_LAN [家庭局域网环境]
-        Hub[常驻 Home Hub (带端侧模型)]
-        App[手机 App UI (可能离家)]
-        Devices[Matter/IoT 设备]
+    subgraph Home_LAN ["家庭局域网环境"]
+        Hub["常驻 Home Hub (带端侧模型)"]
+        App["手机 App UI (可能离家)"]
+        Devices["Matter/IoT 设备"]
         
-        Hub <-->|WebSocket 本地同步| App
-        Hub <-->|局域网极速控制| Devices
+        Hub <-->|"WebSocket 本地同步"| App
+        Hub <-->|"局域网极速控制"| Devices
     end
 
-    App -.->|5G 远程/弱网| FastAPI
-    Flywheel -->|反向代理/MQTT| Hub
+    App -.->|"5G 远程/弱网"| FastAPI
+    Flywheel -->|"反向代理/MQTT"| Hub
 ```
 
 ---
