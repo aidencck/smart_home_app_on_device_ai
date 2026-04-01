@@ -4,12 +4,15 @@
 
 <img src="docs/20260330004242_rec_.gif" width="50%" alt="Demo" />
 
-[![Flutter](https://img.shields.io/badge/Flutter-3.x-blue.svg?logo=flutter)](https://flutter.dev)
-[![Dart](https://img.shields.io/badge/Dart-3.x-0175C2.svg?logo=dart)](https://dart.dev)
-[![llama.cpp](https://img.shields.io/badge/llama.cpp-Edge_AI-orange.svg)](https://github.com/ggerganov/llama.cpp)
-[![Isar DB](https://img.shields.io/badge/Isar-3.1-green.svg)](https://isar.dev)
-[![License](https://img.shields.io/badge/License-MIT-success.svg)](LICENSE)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+<p align="left">
+  <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-02569B?style=for-the-badge&logo=flutter&logoColor=white" alt="Flutter"></a>
+  <a href="https://github.com/ggerganov/llama.cpp"><img src="https://img.shields.io/badge/llama.cpp-Edge_AI-000000?style=for-the-badge&logo=c%2B%2B&logoColor=white" alt="llama.cpp"></a>
+  <a href="https://isar.dev"><img src="https://img.shields.io/badge/Isar_DB-Local_RAG-FF0055?style=for-the-badge&logo=surrealdb&logoColor=white" alt="Isar"></a>
+  <a href="https://fastapi.tiangolo.com/"><img src="https://img.shields.io/badge/FastAPI-Cloud_Core-009688?style=for-the-badge&logo=fastapi&logoColor=white" alt="FastAPI"></a>
+  <a href="https://redis.io/"><img src="https://img.shields.io/badge/Redis-Device_Shadow-DC382D?style=for-the-badge&logo=redis&logoColor=white" alt="Redis"></a>
+  <a href="https://csa-iot.org/"><img src="https://img.shields.io/badge/Matter-Local_First-0B5394?style=for-the-badge&logo=matter&logoColor=white" alt="Matter"></a>
+  <a href="https://developer.apple.com/siri/"><img src="https://img.shields.io/badge/Apple_Siri-Intents-000000?style=for-the-badge&logo=apple&logoColor=white" alt="Apple"></a>
+</p>
 
 A next-generation Smart Home application demonstrating the **production-ready implementation of On-Device AI + Agent architecture**. Powered by `llama.cpp` through Dart FFI and a lightweight local RAG (Retrieval-Augmented Generation) system.
 
@@ -163,66 +166,86 @@ A next-generation Smart Home application demonstrating the **production-ready im
 展示从语音发起到设备响应的全生命周期，突出脱敏、认证与数据飞轮卡点。
 ```mermaid
 graph TD
+    classDef edge fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b;
+    classDef cloud fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c;
+    classDef warning fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#b71c1c;
+    classDef hardware fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20;
+
     Start([用户发起语音/文本指令]) --> A[端侧: ASR 转文本]
-    A --> B{是否触碰合规红线?}
-    B -->|"是 (高危/违规)"| C[端侧: 强制输出 action:none 拒答]
+    A:::edge --> B{是否触碰合规红线?}
+    B:::edge -->|"是 (高危/违规)"| C[端侧: 强制输出 action:none 拒答]
+    C:::warning
     B -->|否| D{端侧: 意图复杂度评估}
+    D:::edge
     
     D -->|"简单/高频"| E1[注入动态设备快照 Dynamic Context]
-    E1 --> E[端侧 0.5B 模型本地纯闭环推理]
+    E1:::edge --> E[端侧 0.5B 模型本地纯闭环推理]
+    E:::edge
     D -->|"复杂/长尾"| F[端侧: NER 隐私前置脱敏]
+    F:::warning
     
     F --> G[请求云端 FastAPI 网关]
-    G --> H{Semantic Cache 命中?}
+    G:::cloud --> H{Semantic Cache 命中?}
+    H:::cloud
     
     H -->|是| I[返回缓存的纯 JSON 指令]
+    I:::cloud
     H -->|否| J[云端大模型推理 仅限内存阅后即焚]
-    J --> I
+    J:::cloud --> I
     
     E --> K[合并纯 JSON 结果并验证严格格式]
     I --> K
+    K:::edge
     
     K --> L{涉及高危物理设备?}
-    L -->|"是 (如门锁)"| M[触发 FaceID/生物认证墙]
-    M -->|失败| End_Fail([拒绝执行])
+    L:::edge -->|"是 (如门锁)"| M[触发 FaceID/生物认证墙]
+    M:::warning -->|失败| End_Fail([拒绝执行])
     M -->|成功| N[Executor: 下发局域网控制指令]
     L -->|否| N
+    N:::hardware
     
     N --> O([设备响应并更新状态])
+    O:::hardware
     
     O -.->|异步| P[更新本地 Isar 数据库 AES-256加密]
+    P:::warning
     O -.->|"异步检查"| Q{用户是否显式 Opt-in 授权?}
-    Q -->|否| End_Ignore([静默丢弃 不留存数据])
+    Q:::edge -->|否| End_Ignore([静默丢弃 不留存数据])
     Q -->|是| R[上传脱敏/匿名化 Bad Cases 进飞轮]
+    R:::cloud
 ```
 
 ### 2. 产品与微服务架构 (Product Architecture)
 展示端侧重组件、云端微服务与物理终端的三层结构。
 ```mermaid
 flowchart TB
+    classDef edgeNode fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b;
+    classDef cloudNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c;
+    classDef hardwareNode fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20;
+
     subgraph edge ["端侧环境 (手机/中控屏)"]
         direction TB
-        user_ui["Flutter UI层 (Opt-in强授权)"]
-        isolate_engine["Isolate 引擎 (JSON严格输出)"]
-        local_db[("Isar 数据库 (AES加密 30天TTL)")]
-        executor["设备执行器 (包含生物认证墙)"]
+        user_ui["Flutter UI层 (Opt-in强授权)"]:::edgeNode
+        isolate_engine["Isolate 引擎 (JSON严格输出)"]:::edgeNode
+        local_db[("Isar 数据库 (AES加密 30天TTL)")]:::edgeNode
+        executor["设备执行器 (包含生物认证墙)"]:::edgeNode
     end
 
     subgraph cloud ["云端环境 (阿里云/AWS)"]
         direction TB
-        api_gateway["APISIX 网关"]
-        ai_router["FastAPI AI路由 (内存阅后即焚)"]
-        data_flywheel["FastAPI 数据飞轮"]
-        ota_service["FastAPI OTA 分发"]
+        api_gateway["APISIX 网关"]:::cloudNode
+        ai_router["FastAPI AI路由 (内存阅后即焚)"]:::cloudNode
+        data_flywheel["FastAPI 数据飞轮"]:::cloudNode
+        ota_service["FastAPI OTA 分发"]:::cloudNode
         
-        vllm["vLLM 私有兜底模型"]
-        enterprise_api["商业API 企业级无训练承诺"]
-        redis[("Redis 设备影子 0sTTL探针")]
-        celery["Celery Worker (包含Judge二次隐私过滤)"]
+        vllm["vLLM 私有兜底模型"]:::cloudNode
+        enterprise_api["商业API 企业级无训练承诺"]:::cloudNode
+        redis[("Redis 设备影子 0sTTL探针")]:::cloudNode
+        celery["Celery Worker (包含Judge二次隐私过滤)"]:::cloudNode
     end
 
     subgraph hardware ["物理设备环境"]
-        iot_devices["Matter/MQTT 智能设备"]
+        iot_devices["Matter/MQTT 智能设备"]:::hardwareNode
     end
 
     user_ui --> isolate_engine
@@ -298,11 +321,12 @@ flowchart LR
 展示复杂复合指令的端云并行处理与竞态防护机制。
 ```mermaid
 sequenceDiagram
-    participant User
-    participant App as Flutter App
-    participant EdgeAI as Isolate Engine
-    participant Cloud as FastAPI Backend
-    participant CloudLLM as vLLM或OpenAI
+    autonumber
+    participant User as "👤 用户"
+    participant App as "📱 Flutter App"
+    participant EdgeAI as "🤖 Isolate Engine"
+    participant Cloud as "☁️ FastAPI Backend"
+    participant CloudLLM as "🧠 vLLM/OpenAI"
 
     User->>App: 语音或文本输入: 今天出门要带伞吗，顺便把灯关了
     App->>App: Layer 1 规则引擎评估未命中
@@ -312,38 +336,44 @@ sequenceDiagram
     note right of App: 切割为: 1. 把灯关了 2. 今天出门要带伞吗
     
     par 并行处理本地指令
-        App->>App: 从 Isar 提取动态 Context
-        App->>EdgeAI: 启动本地推理 处理 把灯关了
-        EdgeAI-->>App: 返回严格 JSON 控制指令
-        App->>App: 触发高危指令拦截墙
-        App->>App: Action Executor 解析并下发局域网控制
-        App-->>User: UI 立刻反馈: 已为您关灯
-    and 并行处理云端请求
-        App->>App: NER 剥离 PII 标识符
-        App->>Cloud: POST /api/v1/ai/chat 带 Command ID
-        activate Cloud
-        Cloud->>Cloud: Vector Clock 校验设备影子新鲜度
-        alt 状态过期且涉及高危设备
-            Cloud->>App: 主动探针拉取状态 0s TTL
+        rect rgb(225, 245, 254)
+            App->>App: 从 Isar 提取动态 Context
+            App->>EdgeAI: 启动本地推理 处理 把灯关了
+            EdgeAI-->>App: 返回严格 JSON 控制指令
+            App->>App: 触发高危指令拦截墙
+            App->>App: Action Executor 解析并下发局域网控制
+            App-->>User: UI 立刻反馈: 已为您关灯
         end
-        Cloud->>CloudLLM: 异步转发请求
-        CloudLLM-->>Cloud: 响应 严格格式 JSON
-        Cloud-->>App: 内存阅后即焚并返回结果
-        deactivate Cloud
-        App->>App: 校验 Command ID 是否已过期
-        App-->>User: UI 追加反馈: 另外今天有雨建议带伞
+    and 并行处理云端请求
+        rect rgb(243, 229, 245)
+            App->>App: NER 剥离 PII 标识符
+            App->>Cloud: POST /api/v1/ai/chat 带 Command ID
+            activate Cloud
+            Cloud->>Cloud: Vector Clock 校验设备影子新鲜度
+            alt 状态过期且涉及高危设备
+                Cloud->>App: 主动探针拉取状态 0s TTL
+            end
+            Cloud->>CloudLLM: 异步转发请求
+            CloudLLM-->>Cloud: 响应 严格格式 JSON
+            Cloud-->>App: 内存阅后即焚并返回结果
+            deactivate Cloud
+            App->>App: 校验 Command ID 是否已过期
+            App-->>User: UI 追加反馈: 另外今天有雨建议带伞
+        end
     end
 
     App->>Cloud: 异步 POST /api/v1/devices/shadow 更新设备状态
     
     %% 数据飞轮合规与评估链路
     opt 若本次交互为 Bad Case
-        App->>App: 检查 Opt-in 体验改善计划授权
-        alt 已显式授权
-            App->>Cloud: POST /api/v1/data/telemetry
-            Cloud->>Cloud: Judge 二次隐私过滤与质量评估
-        else 未授权
-            App->>App: 静默丢弃 本地不留存
+        rect rgb(255, 235, 238)
+            App->>App: 检查 Opt-in 体验改善计划授权
+            alt 已显式授权
+                App->>Cloud: POST /api/v1/data/telemetry
+                Cloud->>Cloud: Judge 二次隐私过滤与质量评估
+            else 未授权
+                App->>App: 静默丢弃 本地不留存
+            end
         end
     end
 ```
@@ -367,23 +397,23 @@ sequenceDiagram
 1. **破局硬件限制：端侧 AI 零幻觉控制**
    打破了大模型容易产生“幻觉”从而无法安全控制硬件的痛点。创新性地采用 `动态 GBNF (GGML BNF) 语法树` 技术，将设备的物理上下文（Context）直接注入底层 C++ 采样约束中，实现了 **100% 格式严谨的 JSON 指令输出**，彻底杜绝越权操作和无效解析。
 
-2. **破局硬件限制：端侧 AI 零幻觉控制**
-   打破了大模型容易产生“幻觉”从而无法安全控制硬件的痛点。创新性地采用 `动态 GBNF (GGML BNF) 语法树` 技术，将设备的物理上下文（Context）直接注入底层 C++ 采样约束中，实现了 **100% 格式严谨的 JSON 指令输出**，彻底杜绝越权操作和无效解析。
+2. **三层意图算力路由 (3-Tier Compute Routing)**
+   彻底解耦端云算力。Layer 1 (本地规则引擎) 实现 <10ms 极速响应；Layer 2 (端侧大模型) 拦截 80% 复杂家庭指令并保证完全断网可用；Layer 3 (云端大模型) 作为长尾兜底。在保障体验的同时将云端推理成本硬切掉 80% 以上。
 
-3. **全栈隐私护城河：Privacy by Design**
-   无论是端侧的 **Isar AES-256 全盘加密** 与 **30天滚动清理**，还是云端交互的 **前置 NER 脱敏**、**内存阅后即焚**，以及进入数据飞轮前的 **强制 Opt-in 显式授权**，项目在数据流转的每一个毛细血管都贯彻了最严苛的合规标准。
+3. **双轨制 IoT 通信与防乱序底座 (Double-Track IoT & Concurrency Defense)**
+   局域网主通道采用 Matter 实现 0 延迟控制，云端副通道通过 MQTT 覆盖长尾设备。在 FastAPI 后端引入高级并发防御：基于 `Redis SETNX` 的防重放锁与 `Lua 脚本原子操作` 驱动的 Vector Clock (向量时钟) 设备影子，彻底解决多端控制下的状态脏读和“幽灵跳动”。
 
 4. **全球生态兼容与无感配网 (Global Ecosystem & Zero-Touch Setup)**
-   深度集成 Apple Home, Google Home 和 Amazon Alexa 三大智能生态。首创“双轨制”架构（Matter 局域网直控 + C2C 云端互联），不仅支持亚马逊 FFS 零接触配网与 Google AppFlip 无缝授权，更通过 Siri App Intents 构建了防守反击的 AI 护城河，实现了极佳的跨平台用户激活率与留存率。
+   深度集成 Apple Home, Google Home 和 Amazon Alexa 三大智能生态。不仅支持亚马逊 FFS 零接触配网与 Google AppFlip 无缝授权，更通过 Siri App Intents 构建了防守反击的 AI 护城河，将“御三家”的流量洗入我们原生的主动智能体系。
 
-5. **高性能工程落地：Isolate 异步与指令解耦**
+5. **全栈隐私护城河：Privacy by Design**
+   无论是端侧的 **Isar AES-256 全盘加密**，还是云端交互的 **前置 NER 脱敏**、**内存阅后即焚**，以及进入数据飞轮前的 **强制 Opt-in 显式授权**，项目在数据流转的每一个毛细血管都贯彻了最严苛的合规标准。
+
+6. **高性能工程落地：Isolate 异步与指令解耦**
    利用 Flutter 的 `Isolate` 和 FFI 深度绑定 `llama.cpp`，确保端侧 2B 模型推理不阻塞主线程。在端云协同中，实现了 **意图复合切割 (Intent Splitting)**，支持本地控制指令与云端长尾推理并行处理，极大降低了用户体感延迟。
 
-6. **数据飞轮闭环：从模型评估到自动化微调**
-   包含完整的 `Model Forge` 数据工厂。不是简单的拼凑数据，而是基于业务指标逆向推导 **数据合成的 5 条黄金规则**。并配合云端 `RabbitMQ + Celery` 构建的 `LLM-as-a-Judge` 异步清洗管道，实现脱敏日志的自动化清洗、打分与 SFT 微调反馈，构建了可持续进化的智能底座。
-
-7. **工业级抗并发底座：彻底消除状态漂移**
-   摒弃了简单的读写模型，在 FastAPI 后端大量运用了高级并发防御机制：基于 `Hashlib SHA-256 + 状态签名` 的抗投毒语义缓存、基于 `Redis SETNX` 的分布式防重放锁，以及基于 `Lua 脚本原子操作` 的 Vector Clock 设备影子更新，保证了在极端弱网重试下的绝对数据一致性。
+7. **数据飞轮闭环：从模型评估到自动化微调**
+   包含完整的 `Model Forge` 数据工厂。基于业务指标逆向推导 **数据合成的 5 条黄金规则**。配合云端 `RabbitMQ + Celery` 构建的 `LLM-as-a-Judge` 异步清洗管道，实现脱敏日志的自动化打分与 SFT 微调反馈，构建了可持续进化的智能底座。
 
 ---
 
