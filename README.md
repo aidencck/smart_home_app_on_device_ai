@@ -66,12 +66,13 @@ A next-generation Smart Home application demonstrating the **production-ready im
 * [智能家居端云协同架构落地方案 (基于 FastAPI) - 研发工程评审版](docs/fastapi_edge_cloud_architecture.md)
 * [智能家居端云协同 AI 架构设计方案](docs/edge_cloud_collaborative_architecture.md)
 * [端云协同大模型 AI Agent：全链路数据与部署架构解决方案](docs/full_lifecycle_ai_architecture_solution.md)
-* [🔗 **[New]** 智能家居端云协同架构：商用化演进与盲区攻坚方案 (Architecture Evolution)](docs/architecture_evolution_and_blind_spots.md)
+* [智能家居端云协同架构：商用化演进与盲区攻坚方案 (Architecture Evolution)](docs/architecture_evolution_and_blind_spots.md)
 * [智能家居 Matter 协议生态接入架构方案 (Matter Integration)](backend/docs/matter_integration_architecture.md)
-* [🔗 **[New]** 智能家居 Matter 对接项目排期与研发任务清单 (Matter Delivery Plan)](docs/matter_integration_project_schedule_and_task_breakdown.md)
-* [🔗 **[New]** 后端核心架构设计与演进路线 (Backend Architecture & Roadmap)](backend/docs/architecture.md)
-* [🔗 **[New]** 后端基建规划与 DDD 落地指南 (Infrastructure Design)](backend/docs/infrastructure_design.md)
-* [🔗 **[New]** 架构演进路线与遗留任务清单 (Architecture Roadmap)](backend/docs/architecture_roadmap.md)
+* [智能家居 Matter 对接项目排期与研发任务清单 (Matter Delivery Plan)](docs/matter_integration_project_schedule_and_task_breakdown.md)
+* [🔗 **[New]** 全球三大智能生态（Apple, Google, Alexa）接入产品战略与架构方案 (Ecosystem Integration)](docs/ecosystem_integration_strategy_apple_google_alexa.md)
+* [后端核心架构设计与演进路线 (Backend Architecture & Roadmap)](backend/docs/architecture.md)
+* [后端基建规划与 DDD 落地指南 (Infrastructure Design)](backend/docs/infrastructure_design.md)
+* [架构演进路线与遗留任务清单 (Architecture Roadmap)](backend/docs/architecture_roadmap.md)
 
 ### 3. 规范、运维与审计 (Standards, DevOps & Audit)
 * [🔗 **[New]** 后端 API 规范与全局异常处理标准 (API Standards)](backend/docs/api_standards.md)
@@ -365,16 +366,22 @@ sequenceDiagram
 1. **破局硬件限制：端侧 AI 零幻觉控制**
    打破了大模型容易产生“幻觉”从而无法安全控制硬件的痛点。创新性地采用 `动态 GBNF (GGML BNF) 语法树` 技术，将设备的物理上下文（Context）直接注入底层 C++ 采样约束中，实现了 **100% 格式严谨的 JSON 指令输出**，彻底杜绝越权操作和无效解析。
 
-2. **全栈隐私护城河：Privacy by Design**
+2. **破局硬件限制：端侧 AI 零幻觉控制**
+   打破了大模型容易产生“幻觉”从而无法安全控制硬件的痛点。创新性地采用 `动态 GBNF (GGML BNF) 语法树` 技术，将设备的物理上下文（Context）直接注入底层 C++ 采样约束中，实现了 **100% 格式严谨的 JSON 指令输出**，彻底杜绝越权操作和无效解析。
+
+3. **全栈隐私护城河：Privacy by Design**
    无论是端侧的 **Isar AES-256 全盘加密** 与 **30天滚动清理**，还是云端交互的 **前置 NER 脱敏**、**内存阅后即焚**，以及进入数据飞轮前的 **强制 Opt-in 显式授权**，项目在数据流转的每一个毛细血管都贯彻了最严苛的合规标准。
 
-3. **高性能工程落地：Isolate 异步与指令解耦**
+4. **全球生态兼容与无感配网 (Global Ecosystem & Zero-Touch Setup)**
+   深度集成 Apple Home, Google Home 和 Amazon Alexa 三大智能生态。首创“双轨制”架构（Matter 局域网直控 + C2C 云端互联），不仅支持亚马逊 FFS 零接触配网与 Google AppFlip 无缝授权，更通过 Siri App Intents 构建了防守反击的 AI 护城河，实现了极佳的跨平台用户激活率与留存率。
+
+5. **高性能工程落地：Isolate 异步与指令解耦**
    利用 Flutter 的 `Isolate` 和 FFI 深度绑定 `llama.cpp`，确保端侧 2B 模型推理不阻塞主线程。在端云协同中，实现了 **意图复合切割 (Intent Splitting)**，支持本地控制指令与云端长尾推理并行处理，极大降低了用户体感延迟。
 
-4. **数据飞轮闭环：从模型评估到自动化微调**
+6. **数据飞轮闭环：从模型评估到自动化微调**
    包含完整的 `Model Forge` 数据工厂。不是简单的拼凑数据，而是基于业务指标逆向推导 **数据合成的 5 条黄金规则**。并配合云端 `RabbitMQ + Celery` 构建的 `LLM-as-a-Judge` 异步清洗管道，实现脱敏日志的自动化清洗、打分与 SFT 微调反馈，构建了可持续进化的智能底座。
 
-5. **工业级抗并发底座：彻底消除状态漂移**
+7. **工业级抗并发底座：彻底消除状态漂移**
    摒弃了简单的读写模型，在 FastAPI 后端大量运用了高级并发防御机制：基于 `Hashlib SHA-256 + 状态签名` 的抗投毒语义缓存、基于 `Redis SETNX` 的分布式防重放锁，以及基于 `Lua 脚本原子操作` 的 Vector Clock 设备影子更新，保证了在极端弱网重试下的绝对数据一致性。
 
 ---
@@ -562,6 +569,14 @@ We welcome contributions! Please see our [CONTRIBUTING.md](CONTRIBUTING.md) for 
     *   `#19` [🚧] Matter Controller 控制闭环与 Agent JSON 指令映射
     *   `#20` [🚧] Subscribe 状态同步、本地缓存与云端影子一致性打通
     *   `#21` [🚧] Matter 商业化 MVP 测试矩阵、试点发布与质量看板
+
+### Phase 6: 全球三大生态集成与无感配网 (🌍 御三家接入)
+*   **Epic**: 接入 Apple, Google, Alexa，实现“借力打力”的流量护城河策略。
+*   **Key Issues**:
+    *   `#22` [🚧] Google AppFlip 一键授权与 C2C API Gateway 适配
+    *   `#23` [🚧] Amazon FFS 零接触配网 MES 产线改造与 Lambda 对接
+    *   `#24` [🚧] iOS App Intents 深度集成与 Siri 本地推理唤醒链路
+    *   `#25` [🚧] 跨生态数据同步的隐私过滤拦截器 (NER 增强版)
 
 > 💡 **参与贡献**：如果你对以上任何 Issue 感兴趣，欢迎在对应的 Issue 下留言认领。我们会为你分配任务并提供技术支持！
 
