@@ -42,13 +42,23 @@ class LlamaCppEngineMock implements InferenceEngine {
     // 模拟推理耗时 (可以通过添加指标属性返回，由于当前接口是String，我们使用Stopwatch在Agent层记录)
     await Future.delayed(const Duration(milliseconds: 800));
     
-    // 根据 Prompt 简单模拟不同的输出，以便测试解析器
-    if (prompt.contains("有点热") || prompt.contains("空调")) {
+    // 从 Prompt 中提取用户指令，避免匹配到上下文中的设备名
+    final queryMatch = RegExp(r'【最新用户指令】\n"([^"]+)"').firstMatch(prompt);
+    final userQuery = queryMatch != null ? queryMatch.group(1) ?? "" : prompt;
+
+    // 根据 userQuery 简单模拟不同的输出，以便测试解析器
+    if (userQuery.contains("有点热") || userQuery.contains("空调")) {
       return '{"device_id": "ac_1", "action": "set_temp", "value": 24}';
-    } else if (prompt.contains("开灯") || prompt.contains("灯")) {
+    } else if (userQuery.contains("开灯") || userQuery.contains("灯")) {
       return '{"device_id": "light_1", "action": "turn_on"}';
-    } else if (prompt.contains("开过") || prompt.contains("记录")) {
+    } else if (userQuery.contains("开过") || userQuery.contains("记录")) {
       return '{"device_id": "system", "action": "reply", "value": "根据记录，门锁今天早上被打开过。"}';
+    } else if (userQuery.contains("打扫") || userQuery.contains("扫地")) {
+      return '{"device_id": "robot_1", "action": "turn_on"}';
+    } else if (userQuery.contains("电视") || userQuery.contains("电影")) {
+      return '{"device_id": "tv_1", "action": "turn_on"}';
+    } else if (userQuery.contains("窗帘")) {
+      return '{"device_id": "curtain_1", "action": "turn_on"}';
     } else {
       return '{"device_id": "unknown", "action": "none"}';
     }

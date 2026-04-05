@@ -8,6 +8,11 @@ class VirtualDeviceService implements DeviceService {
 
   // 模拟网络延迟时间
   final Duration networkDelay;
+  
+  final _stateController = StreamController<DeviceStateEvent>.broadcast();
+
+  @override
+  Stream<DeviceStateEvent> get onDeviceStateChanged => _stateController.stream;
 
   VirtualDeviceService({this.networkDelay = const Duration(milliseconds: 100)});
 
@@ -50,22 +55,40 @@ class VirtualDeviceService implements DeviceService {
 
   @override
   Future<bool> toggleDevice(String id) async {
-    await Future.delayed(networkDelay);
-    try {
-      final device = _devices.firstWhere((d) => d.id == id);
-      device.isOn = !device.isOn;
-      return true;
-    } catch (e) {
-      return false;
-    }
+    final device = await getDeviceById(id);
+    if (device == null) return false;
+    return setProperties(id, {'power_state': !device.isOn});
   }
 
   @override
   Future<bool> setDeviceState(String id, Map<String, dynamic> stateChanges) async {
+    return setProperties(id, stateChanges);
+  }
+
+  @override
+  Future<bool> setProperties(String id, Map<String, dynamic> desiredProperties) async {
     await Future.delayed(networkDelay);
     try {
       final device = _devices.firstWhere((d) => d.id == id);
-      device.updateFromJson(stateChanges);
+      
+      // Update properties
+      device.properties.addAll(desiredProperties);
+      
+      // If the older code passes 'on', map it
+      if (desiredProperties.containsKey('on')) {
+        device.isOn = desiredProperties['on'] as bool;
+      }
+      
+      final msgId = DateTime.now().millisecondsSinceEpoch.toString();
+      final ts = DateTime.now().millisecondsSinceEpoch;
+      
+      // Emit standard IoT message
+      _stateController.add(DeviceStateEvent(
+        deviceId: id, 
+        updatedState: Map<String, dynamic>.from(device.properties),
+        messageId: msgId,
+        timestamp: ts,
+      ));
       return true;
     } catch (e) {
       return false;

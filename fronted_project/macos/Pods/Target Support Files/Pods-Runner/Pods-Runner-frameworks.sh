@@ -179,16 +179,19 @@ if [[ "$CONFIGURATION" == "Debug" ]]; then
   install_framework "${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/isar_flutter_libs/macos/libisar.dylib"
   install_framework "${BUILT_PRODUCTS_DIR}/isar_flutter_libs/isar_flutter_libs.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/local_auth_darwin/local_auth_darwin.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/shared_preferences_foundation/shared_preferences_foundation.framework"
 fi
 if [[ "$CONFIGURATION" == "Profile" ]]; then
   install_framework "${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/isar_flutter_libs/macos/libisar.dylib"
   install_framework "${BUILT_PRODUCTS_DIR}/isar_flutter_libs/isar_flutter_libs.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/local_auth_darwin/local_auth_darwin.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/shared_preferences_foundation/shared_preferences_foundation.framework"
 fi
 if [[ "$CONFIGURATION" == "Release" ]]; then
   install_framework "${PODS_ROOT}/../Flutter/ephemeral/.symlinks/plugins/isar_flutter_libs/macos/libisar.dylib"
   install_framework "${BUILT_PRODUCTS_DIR}/isar_flutter_libs/isar_flutter_libs.framework"
   install_framework "${BUILT_PRODUCTS_DIR}/local_auth_darwin/local_auth_darwin.framework"
+  install_framework "${BUILT_PRODUCTS_DIR}/shared_preferences_foundation/shared_preferences_foundation.framework"
 fi
 if [ "${COCOAPODS_PARALLEL_CODE_SIGN}" == "true" ]; then
   wait

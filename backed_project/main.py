@@ -1,5 +1,6 @@
 import os
 from fastapi import FastAPI, Request
+from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
@@ -82,3 +83,6 @@ async def health_check():
     Check if the API and connections are healthy.
     """
     return {"status": "healthy", "version": settings.VERSION, "role": service_role}
+
+# Mount static files for admin dashboard
+app.mount("/static", StaticFiles(directory="static"), name="static")

@@ -26,6 +26,9 @@ class AgentContextProvider {
       d.forEach((key, value) {
         if (value is String || value is num || value is bool || value == null) {
           safeMap[key] = value;
+        } else if (value is Map) {
+          // Allow TSL state map
+          safeMap[key] = value;
         }
       });
       return safeMap;

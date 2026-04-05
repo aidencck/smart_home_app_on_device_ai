@@ -12,3 +12,35 @@ class DeviceShadowUpdate(BaseSchema):
 class DeviceShadowBatchUpdate(BaseSchema):
     """批量上报的设备影子更新"""
     updates: List[DeviceShadowUpdate] = Field(..., description="批量更新的设备状态列表")
+
+class DeviceBase(BaseModel):
+    name: str
+    product_id: str
+
+class DeviceCreate(DeviceBase):
+    pass
+
+class DeviceUpdate(DeviceBase):
+    pass
+
+class Device(DeviceBase):
+    id: str
+    tenant_id: str
+    class Config:
+        orm_mode = True
+
+class DeviceBase(BaseModel):
+    name: str
+    product_id: str
+
+class DeviceCreate(DeviceBase):
+    pass
+
+class DeviceUpdate(DeviceBase):
+    pass
+
+class Device(DeviceBase):
+    id: str
+    tenant_id: str
+    class Config:
+        orm_mode = True

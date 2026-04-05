@@ -12,91 +12,130 @@ enum DeviceType {
   unknown
 }
 
+// --- Capabilities ---
+mixin HasTemperature on SmartDevice {
+  int get temperature => (properties['temperature'] as num?)?.toInt() ?? 26;
+  set temperature(int value) => properties['temperature'] = value;
+}
+
+mixin HasBrightness on SmartDevice {
+  double get brightness => (properties['brightness'] as num?)?.toDouble() ?? 0.8;
+  set brightness(double value) => properties['brightness'] = value;
+}
+
+// --- Security ---
+enum SecurityLevel { normal, highRisk }
+
 abstract class SmartDevice {
   final String id;
   final String name;
   final String room;
   final DeviceType type;
-  bool isOn;
+
+  final Map<String, dynamic> properties = {};
+
+  bool get isOn => properties['power_state'] == true;
+  set isOn(bool value) => properties['power_state'] = value;
 
   SmartDevice({
     required this.id,
     required this.name,
     required this.room,
     required this.type,
-    this.isOn = false,
-  });
+    bool isOn = false,
+  }) {
+    this.isOn = isOn;
+  }
 
   IconData get icon;
 
+  SecurityLevel get securityLevel => SecurityLevel.normal;
+
+  Map<String, dynamic> serializeCapabilities() => {};
+
+  void updateCapabilitiesFromJson(Map<String, dynamic> json) {}
+
   Map<String, dynamic> toJson() {
+    // Export state as a TSL map
     return {
       'id': id,
       'name': name,
       'room': room,
       'type': type.name,
-      'on': isOn,
-      // IconData 无法被 JSON 序列化，所以在发给大模型的时候不需要携带，
-      // UI 渲染时直接通过类实例的 icon 属性获取即可。
-      // 如果某些地方（比如旧的 UI 组件）仍然依赖字典里的 icon，
-      // 我们可以将其排除在真正的 jsonEncode 之外，或者只在 UI 层手动附加。
+      'state': Map<String, dynamic>.from(properties),
     };
   }
 
   void updateFromJson(Map<String, dynamic> json) {
-    if (json.containsKey('on')) {
-      isOn = json['on'] as bool;
+    if (json.containsKey('state')) {
+      final stateMap = json['state'] as Map<String, dynamic>;
+      properties.addAll(stateMap);
+    } else {
+      // Fallback for older flat JSON structure
+      if (json.containsKey('on')) {
+        isOn = json['on'] as bool;
+      }
+      updateCapabilitiesFromJson(json);
     }
   }
 
   SmartDevice clone();
 }
 
-class LightDevice extends SmartDevice {
+class LightDevice extends SmartDevice with HasBrightness {
   LightDevice({
     required super.id,
     required super.name,
     required super.room,
     super.isOn,
-  }) : super(type: DeviceType.light);
+    double brightness = 0.8,
+  }) : super(type: DeviceType.light) {
+    this.brightness = brightness;
+  }
+
+  @override
+  Map<String, dynamic> serializeCapabilities() => {'brightness': brightness};
+
+  @override
+  void updateCapabilitiesFromJson(Map<String, dynamic> json) {
+    if (json.containsKey('brightness')) {
+      brightness = (json['brightness'] as num).toDouble();
+    }
+  }
 
   @override
   IconData get icon => Icons.lightbulb_outline;
 
   @override
   LightDevice clone() {
-    return LightDevice(id: id, name: name, room: room, isOn: isOn);
+    final copy = LightDevice(id: id, name: name, room: room, isOn: isOn, brightness: brightness);
+    return copy;
   }
 }
 
-class AcDevice extends SmartDevice {
-  int temperature;
-
+class AcDevice extends SmartDevice with HasTemperature {
   AcDevice({
     required super.id,
     required super.name,
     required super.room,
     super.isOn,
-    this.temperature = 26,
-  }) : super(type: DeviceType.ac);
-
-  @override
-  IconData get icon => Icons.ac_unit;
-
-  @override
-  Map<String, dynamic> toJson() {
-    final data = super.toJson();
-    data['temperature'] = temperature;
-    return data;
+    int temperature = 26,
+  }) : super(type: DeviceType.ac) {
+    this.temperature = temperature;
   }
 
   @override
-  void updateFromJson(Map<String, dynamic> json) {
-    super.updateFromJson(json);
+  Map<String, dynamic> serializeCapabilities() => {'temperature': temperature};
+
+  @override
+  void updateCapabilitiesFromJson(Map<String, dynamic> json) {
     if (json.containsKey('temperature')) {
       temperature = json['temperature'] as int;
     }
   }
+
+  @override
+  IconData get icon => Icons.ac_unit;
 
   @override
   AcDevice clone() {
@@ -111,6 +150,9 @@ class LockDevice extends SmartDevice {
     required super.room,
     super.isOn = true, // true means locked
   }) : super(type: DeviceType.lock);
+
+  @override
+  SecurityLevel get securityLevel => SecurityLevel.highRisk;
 
   @override
   IconData get icon => Icons.lock_outline;
@@ -128,6 +170,9 @@ class CameraDevice extends SmartDevice {
     required super.room,
     super.isOn = true,
   }) : super(type: DeviceType.camera);
+
+  @override
+  SecurityLevel get securityLevel => SecurityLevel.highRisk;
 
   @override
   IconData get icon => Icons.videocam_outlined;
@@ -198,7 +243,7 @@ class CurtainDevice extends SmartDevice {
   }) : super(type: DeviceType.curtain);
 
   @override
-  IconData get icon => Icons.curtains_outlined;
+  IconData get icon => Icons.blinds;
 
   @override
   CurtainDevice clone() {

@@ -77,40 +77,43 @@
 
 ---
 
-## 6. 性能优化与核心指标体系 (Performance & Lifecycle Metrics)
+## 6. 端侧 AI 全生命周期核心指标体系 (On-Device AI Full-Lifecycle Metrics Framework)
 
-端侧 AI 的成败取决于能否在算力受限的设备上流畅运行，且在业务上产生实质价值。我们建立了一套覆盖模型全生命周期的全视角指标体系。
+端侧 AI 的成败取决于能否在算力受限的设备上流畅运行，且在业务上产生实质价值。我们建立了一套覆盖“数据准备 -> 模型微调 -> 工程推理 -> 商业变现”的全视角指标体系。该体系是所有 AI 研发和测试工作的“北极星”。
 
-### 6.1 移动端异步调度优化
-*   **Dart Isolate 隔离**：由于 2B 模型的张量计算极度消耗 CPU/GPU，直接在主线程运行会导致 Flutter UI 严重掉帧甚至 ANR。
-*   **实现策略**：模型加载（Mmap）、Prompt Tokenize 和推理解码循环全部压入独立的 Dart Isolate。通过异步端口 (SendPort/ReceivePort) 与主线程通信，确保在输出 Token 流时，UI 依然保持丝滑的 60fps。
+### 6.1 阶段一：数据质量与训练指标 (Data & Training Metrics)
+本阶段决定了模型“吃进去的粮”和“消化能力”，是整个数据飞轮的起点。
 
-### 6.2 全生命周期指标体系 (Full-Lifecycle Metrics Framework)
-根据 [`data_evaluation_and_acceptance_framework.md`](../../model_forge/training/data_evaluation_and_acceptance_framework.md)，我们将指标划分为四大维度，贯穿从数据合成到业务上线的全过程：
+*   **Data Purity (数据纯净度) = 100%**：进入 SFT 训练集前，必须通过 Judge 清洗，彻底剥离所有 PII（个人身份信息），确保隐私绝对安全。
+*   **Data Synthesis Yield (数据合成有效率) ≥ 90%**：基于业务指标逆向推导生成的合成数据，能通过云端 LLM-as-a-Judge 验证并入库的比例。
+*   **Benchmark Coverage (测试集维度覆盖率)**：Golden Dataset 必须包含 40% 直接指令、30% 模糊推理、20% 越界负样本、10% 上下文陷阱，确保评估无死角。
+*   **Loss Convergence (收敛稳定性)**：QLoRA 训练过程中的 Loss 曲线平滑下降，验证集 Loss 无回弹（防止过拟合与灾难性遗忘）。
 
-#### A. 数据质量与训练指标 (Data & Training Ops)
-决定了模型“吃进去的粮”和“消化能力”。
-*   **Data Purity (数据纯净度)**：进入 SFT 训练集前，通过 Judge 清洗的脱敏日志比例（目标：100% 剥离 PII）。
-*   **Loss Convergence (收敛稳定性)**：QLoRA 训练过程中的 Loss 曲线平滑度，防止过拟合（灾难性遗忘）。
+### 6.2 阶段二：模型能力验收指标 (Model Acceptance KPIs)
+这是模型能否从 `Model Forge` 车间毕业的硬性标准。根据 [`data_evaluation_and_acceptance_framework.md`](../../model_forge/training/data_evaluation_and_acceptance_framework.md)，我们在 Golden Benchmark 上自动评测：
 
-#### B. 模型能力验收指标 (Model Acceptance KPIs)
-这是模型能否从 Model Forge 车间毕业的硬性标准，使用 Golden Benchmark 测试集自动评测：
-*   **FSR (Format Strictness Rate / 刚性解析率) ≥ 99.5%**：模型输出的内容必须能被 `json.loads()` 无错解析，不允许包含任何解释性废话。
-*   **IEM (Intent Exact Match / 意图精确匹配率) ≥ 95.0%**：解析后的 JSON 中，`device_id`、`action` 与 Ground Truth 完全一致。
-*   **OOD-R (Out-of-Domain Rejection / 越界拦截率) ≥ 98.0%**：面对非智能家居指令（如写代码、闲聊），必须输出 `{"action": "none"}`。
-*   **DCR (Dynamic Context Resilience / 抗干扰率) ≥ 99.0%**：当传入的设备列表变化或出现不存在的设备时，模型不产生幻觉。
+*   **FSR (Format Strictness Rate / 刚性解析率) ≥ 99.5%**：模型输出必须能被 `json.loads()` 无错解析，绝不包含任何解释性废话或多余 Markdown 标记。
+*   **IEM (Intent Exact Match / 意图精确匹配率) ≥ 95.0%**：解析后的 JSON 中，`device_id`、`action` 与 Ground Truth 完全一致（涵盖模糊意图的精确路由）。
+*   **OOD-R (Out-of-Domain Rejection / 越界拦截率) ≥ 98.0%**：面对非智能家居指令（如写代码、闲聊、诱导违规），必须稳定输出 `{"action": "none"}`。
+*   **DCR (Dynamic Context Resilience / 抗干扰率) ≥ 99.0%**：当传入的设备列表变化或出现不存在的同名设备时，模型不产生幻觉调用。
 
-#### C. 工程与推理性能指标 (Engineering & Inference)
-决定了用户在使用时的“体感流畅度”和手机的“健康度”。
-*   **RAM Peak (推理峰值内存) ≤ 1.5GB**：确保在 3GB/4GB 内存的中低端设备上不触发系统 OOM（杀后台机制）。
-*   **TTFT (Time To First Token / 首字延迟) ≤ 400ms**：从用户点击发送到 UI 渲染出第一个状态变化的时间。
-*   **Throughput (生成吞吐量) ≥ 15 Tokens/s**：在 Apple M 系列/高通骁龙 8Gen2 级别芯片上的生成速度，保证交互的连贯性。
+### 6.3 阶段三：工程与推理性能指标 (Engineering & Inference Metrics)
+决定了用户在使用时的“体感流畅度”和手机的“健康度”，是端侧部署的红线。
 
-#### D. 商业与业务指标 (Business & ROI)
-验证架构重构是否真正为企业带来了降本增效的价值。
-*   **Edge Routing Ratio (端侧拦截率)**：在本地闭环处理，未向云端发起大模型请求的指令占比（预期目标：拦截 80% 以上的高频低智指令）。
-*   **Cloud Token Cost Reduction (云端 Token 降本率)**：相比纯云端方案，通过 Semantic Cache 和端侧拦截节省的 API 账单费用。
-*   **User Opt-in Rate (隐私授权转化率)**：用户愿意加入“体验改善计划”提供脱敏 Bad Case 以反哺数据飞轮的比例。
+*   **TTFT (Time To First Token / 首字延迟) ≤ 300ms**：从用户点击发送到 UI 渲染出第一个状态变化的时间（得益于 Isolate 异步调度）。
+*   **End-to-End Latency (端到端控制延迟) ≤ 800ms**：包含语音转写、意图网关分发、模型推理、局域网设备执行的全链路耗时。
+*   **Throughput (生成吞吐量) ≥ 15 Tokens/s**：在 Apple M 系列 / 高通骁龙 8Gen2 级别芯片上的生成速度。
+*   **RAM Peak (推理峰值内存) ≤ 1.5GB**：通过 GGUF (`Q4_K_M` 或 `IQ2_XXS`) 量化及 mmap 内存映射，确保在 3GB/4GB 内存低端机上 **0 OOM 崩溃率**。
+*   **Model Size (模型分发体积) ≤ 500MB**：通过 OTA 动态下发时的极致压缩体积，降低用户等待与带宽成本。
+*   **100% GBNF Format Hit (端侧语法树绝对命中)**：结合动态 GBNF 语法树注入，在实际推理中强行阻断非法 JSON 生成。
+
+### 6.4 阶段四：商业与业务价值指标 (Business & ROI Metrics)
+验证端出 AI 架构重构是否真正为企业带来了降本增效的护城河。
+
+*   **Edge Routing Ratio (端侧拦截率) ≥ 80%**：在本地闭环处理，未向云端发起大模型请求的指令占比（大幅降低云端并发压力）。
+*   **Cloud Token Cost Reduction (云端 Token 降本率)**：相比纯云端方案，通过本地拦截和云端 Semantic Cache，节省的 API 账单费用估算。
+*   **User Opt-in Rate (隐私授权转化率)**：用户愿意开启“体验改善计划”提供脱敏 Bad Case 反哺数据飞轮的比例。
+*   **First AI Interaction Conversion (首次 AI 交互转化率)**：用户完成首个设备接入后，在 24 小时内完成首次 AI 控制的比例（体现端侧智能的上手门槛）。
 
 ---
 

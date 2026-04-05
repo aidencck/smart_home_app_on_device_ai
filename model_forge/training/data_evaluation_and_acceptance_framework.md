@@ -4,9 +4,11 @@
 
 ---
 
-## 🎯 一、 评估体系的四大核心指标 (KPIs)
+## 🎯 一、 评估体系的四大核心指标 (Model Acceptance KPIs)
 
-我们对端侧模型（如 Qwen2.5-0.5B）的验收，不再依赖传统的 BLEU 或 ROUGE 等文本相似度指标，而是直接与**端侧业务成功率**挂钩。
+> **注**：本部分为端侧 AI 全生命周期指标体系（参见 [`full_lifecycle_ai_architecture_solution.md`](../../docs/architecture/full_lifecycle_ai_architecture_solution.md) 第 6 节）中**阶段二（模型能力验收）**的详细执行标准。
+
+我们对端侧模型（如 Qwen2.5-0.5B 或 Gemma-2B）的验收，不再依赖传统的 BLEU 或 ROUGE 等文本相似度指标，而是直接与**端侧业务成功率**挂钩。
 
 ### 1. JSON 格式刚性解析率 (FSR - Format Strictness Rate)
 *   **定义**：模型输出的内容，能够直接被 Python `json.loads()` 或 Dart `jsonDecode()` 无错解析的比例。

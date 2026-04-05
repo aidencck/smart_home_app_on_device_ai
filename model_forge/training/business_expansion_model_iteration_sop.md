@@ -56,9 +56,10 @@
 - **降维压缩**: 运行 `scripts/quantize.sh`，使用 `llama.cpp` 工具链将模型量化为 `Q4_K_M`（中等精度）或 `IQ2_XXS`（极限内存优化），确保模型体积在 500MB - 1GB 之间。
 
 ### 2. 端侧性能指标对齐
-模型产出后（位于 `model_forge/exports/`），需与业务研发团队对齐以下指标：
-- **内存占用 (RAM/VRAM)**: 是否在目标机型的安全线内（如 3GB 可用内存下不触发 OOM）。
-- **生成速度 (Tokens/s)**: 响应延迟是否满足智能家居的实时交互要求（建议 >20 Tokens/s）。
+模型产出后（位于 `model_forge/exports/`），需与业务研发团队严格对齐[端侧 AI 全生命周期核心指标体系](../../docs/architecture/full_lifecycle_ai_architecture_solution.md)中的工程推理标准：
+- **内存占用 (RAM Peak)**: ≤ 1.5GB（通过 GGUF 量化及 mmap，确保在 3GB/4GB 可用内存机型下不触发 OOM）。
+- **生成速度 (Throughput)**: ≥ 15 Tokens/s（在主流移动芯片上，满足智能家居的实时交互要求）。
+- **延迟 (TTFT & End-to-End)**: 首字延迟 ≤ 300ms，端到端延迟 ≤ 800ms。
 
 ---
 

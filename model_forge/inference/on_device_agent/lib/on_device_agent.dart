@@ -102,6 +102,8 @@ class SmartHomeAgent {
           d.forEach((key, value) {
             if (value is String || value is num || value is bool || value == null) {
               safeMap[key] = value;
+            } else if (value is Map) {
+              safeMap[key] = value;
             }
           });
           return safeMap;

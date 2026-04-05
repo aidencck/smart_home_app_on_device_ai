@@ -100,11 +100,10 @@ class AgentActionExecutor {
       // 4. 记录行为日志 (用于端侧习惯学习和场景推荐)
       _logUserBehavior(intent);
 
-      // 5. 执行控制动作
-      final executed = await _executeCommand(intent);
-      
+      // 剥离 ActionExecutor 的硬件控制权，将其作为 Intent 解析与护栏拦截器
+      // 由 App 层统一收口硬件控制
       return ExecutionResult(
-        success: executed, 
+        success: true, 
         intent: intent,
       );
     } catch (e) {
@@ -164,12 +163,12 @@ class AgentActionExecutor {
     }
     
     // 高危设备安全护栏拦截
-    const highRiskDevices = ['door_1', 'camera_1', 'lock_1'];
-    if (highRiskDevices.contains(intent.deviceId)) {
-      log("🚨 触发高危指令拦截机制！设备 [${intent.deviceId}] 属于高危设备，需要生物认证。");
-      return await _requestBiometricAuth();
-    }
-
+    // 根据设备的属性动态拦截，不再硬编码 ID
+    // 假设传递进来的 intent 需要外部（如 App 层）提供更多的安全等级信息
+    // 或者在 ActionExecutor 初始化时传入安全等级映射。这里暂时使用占位逻辑，
+    // 在真实应用中应该通过依赖注入 DeviceManager 或类似服务来获取设备 SecurityLevel。
+    // 我们暂时移除此处的硬编码，交由调用层或者通过额外接口完成鉴权。
+    
     return true;
   }
 

@@ -7,8 +7,12 @@ import 'device_service.dart';
 class RemoteDeviceService implements DeviceService {
   final String baseUrl;
   final String token;
+  final _stateController = StreamController<DeviceStateEvent>.broadcast();
 
   RemoteDeviceService({required this.baseUrl, required this.token});
+
+  @override
+  Stream<DeviceStateEvent> get onDeviceStateChanged => _stateController.stream;
 
   @override
   Future<void> initialize() async {
@@ -39,8 +43,13 @@ class RemoteDeviceService implements DeviceService {
 
   @override
   Future<bool> setDeviceState(String id, Map<String, dynamic> stateChanges) async {
+    return setProperties(id, stateChanges);
+  }
+
+  @override
+  Future<bool> setProperties(String id, Map<String, dynamic> desiredProperties) async {
     // TODO: 调用真实的 REST API 更新设备属性
-    // 例如: final response = await http.patch('$baseUrl/devices/$id', body: stateChanges);
+    // 例如: final response = await http.patch('$baseUrl/devices/$id', body: desiredProperties);
     // return response.statusCode == 200;
     return false;
   }
