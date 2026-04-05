@@ -6,7 +6,7 @@ from sqlalchemy.future import select
 
 from app import schemas
 from app.api import deps
-from app.db.session import get_db
+from app.api.deps import get_db
 from app.models.firmware import Firmware
 from app.models.product import Product
 from app.core.translation import _

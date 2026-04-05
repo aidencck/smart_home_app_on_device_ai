@@ -24,8 +24,8 @@ typedef struct {
 } my_llama_context;
 
 // 1. 初始化模型
-void* llama_init_wrapper(const char* model_path) {
-    printf("[C++] 正在加载模型: %s\n", model_path);
+void* llama_init_wrapper(const char* model_path, bool use_mmap, bool use_mlock, int n_gpu_layers, int n_threads) {
+    printf("[C++] 正在加载模型: %s (mmap: %d, gpu_layers: %d, threads: %d)\n", model_path, use_mmap, n_gpu_layers, n_threads);
     
     my_llama_context* ctx = (my_llama_context*)malloc(sizeof(my_llama_context));
     if (!ctx) return NULL;

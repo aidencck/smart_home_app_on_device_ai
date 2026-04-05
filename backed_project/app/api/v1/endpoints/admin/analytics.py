@@ -6,7 +6,7 @@ from sqlalchemy import func, select, text, desc, case
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api import deps
-from app.db.session import get_db
+from app.api.deps import get_db
 from app.models.tenant import Tenant
 from app.models.user import User
 from app.models.device import Device

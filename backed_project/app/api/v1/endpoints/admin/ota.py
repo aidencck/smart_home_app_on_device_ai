@@ -5,7 +5,7 @@ from sqlalchemy.future import select
 from pydantic import BaseModel
 
 from app.api import deps
-from app.db.session import get_db
+from app.api.deps import get_db
 from app.models.ota import OTAJob, OTAExecution
 from app.models.device import Device
 from app.models.user import User

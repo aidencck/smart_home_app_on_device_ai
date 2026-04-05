@@ -2,8 +2,8 @@ import 'dart:ffi';
 import 'package:ffi/ffi.dart';
 
 // 定义 C 语言函数签名
-typedef LlamaInitNative = Pointer<Void> Function(Pointer<Utf8> modelPath);
-typedef LlamaInitDart = Pointer<Void> Function(Pointer<Utf8> modelPath);
+typedef LlamaInitNative = Pointer<Void> Function(Pointer<Utf8> modelPath, Bool useMmap, Bool useMlock, Int32 nGpuLayers, Int32 nThreads);
+typedef LlamaInitDart = Pointer<Void> Function(Pointer<Utf8> modelPath, bool useMmap, bool useMlock, int nGpuLayers, int nThreads);
 
 typedef LlamaFreeNative = Void Function(Pointer<Void> context);
 typedef LlamaFreeDart = void Function(Pointer<Void> context);
@@ -38,10 +38,10 @@ class LlamaCppBindings {
   }
 
   /// 初始化模型，返回上下文指针
-  Pointer<Void> initModel(String modelPath) {
+  Pointer<Void> initModel(String modelPath, {bool useMmap = true, bool useMlock = false, int nGpuLayers = 99, int nThreads = 4}) {
     final nativePath = modelPath.toNativeUtf8();
     try {
-      return _llamaInit(nativePath);
+      return _llamaInit(nativePath, useMmap, useMlock, nGpuLayers, nThreads);
     } finally {
       calloc.free(nativePath);
     }

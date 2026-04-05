@@ -15,8 +15,9 @@ class _IsolateInitData {
   final SendPort sendPort;
   final String libraryPath;
   final String modelPath;
+  final int physicalCores;
 
-  _IsolateInitData(this.sendPort, this.libraryPath, this.modelPath);
+  _IsolateInitData(this.sendPort, this.libraryPath, this.modelPath, this.physicalCores);
 }
 
 /// 发送给 Isolate 的推理请求
@@ -83,10 +84,14 @@ class LlamaCppEngine implements InferenceEngine {
 
     final receivePort = ReceivePort();
     
+    // 获取物理核心数作为线程数（避免超线程的上下文切换开销）
+    int physicalCores = Platform.numberOfProcessors ~/ 2;
+    if (physicalCores < 1) physicalCores = 1;
+
     // 启动独立的 Isolate
     _isolate = await Isolate.spawn(
       _isolateEntry,
-      _IsolateInitData(receivePort.sendPort, _libraryPath, modelPath),
+      _IsolateInitData(receivePort.sendPort, _libraryPath, modelPath, physicalCores),
     );
 
     // 等待 Isolate 初始化完成并返回它的 SendPort
@@ -148,11 +153,30 @@ class LlamaCppEngine implements InferenceEngine {
     try {
       // 1. 在 Isolate 中加载 C++ 动态库并初始化模型
       bindings = LlamaCppBindings(data.libraryPath);
-      llamaContext = bindings.initModel(data.modelPath);
+      
+      // 优化：开启 mmap=true，确保文件映射而非全量内存拷贝。nGpuLayers=99 全卸载给GPU。
+      llamaContext = bindings.initModel(
+        data.modelPath,
+        useMmap: true,
+        useMlock: false,
+        nGpuLayers: 99,
+        nThreads: data.physicalCores
+      );
 
       if (llamaContext == null) {
         data.sendPort.send(Exception("模型指针为 null，加载失败。"));
         return;
+      }
+
+      // 优化：模型预热 (Pre-warming)
+      // 在 mmap 模式下，首次执行会触发大量缺页中断 (Page Fault) 和 KV Cache 初始化。
+      // 在 Isolate 里后台预先跑一次极短的推理，把这些耗时操作提前消化掉。
+      try {
+        log("LlamaCppEngine: 开始执行模型冷启动预热...");
+        bindings.infer(llamaContext, "Hello", grammarSchema: null);
+        log("LlamaCppEngine: 预热完成，模型已处于最佳响应状态。");
+      } catch (e) {
+        log("LlamaCppEngine: 预热失败 (忽略): $e");
       }
 
       // 2. 建立 Isolate 内部的通信端口，监听主线程发来的指令

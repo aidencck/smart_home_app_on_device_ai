@@ -8,6 +8,11 @@ import 'theme/figma_colors.dart'; // 引入 Figma Design Tokens
 import 'features/agent/fallback_intent_service.dart'; // 引入重构后的 Fallback 服务
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+  
+  // 触发全局实例创建，开始在后台预加载大模型
+  agentManager.preload();
+  
   runApp(const SmartHomeApp());
 }
 
@@ -184,6 +189,223 @@ class DeviceManager extends ChangeNotifier {
 
 // 全局实例，注入虚拟服务（后续可替换为 RemoteDeviceService）
 final deviceManager = DeviceManager(VirtualDeviceService());
+
+class AgentManager extends ChangeNotifier {
+  final SmartHomeAgent agent = SmartHomeAgent();
+  bool isInitialized = false;
+  bool isInitializing = false;
+  bool isError = false;
+
+  final List<Map<String, dynamic>> chatHistory = [];
+  bool isProcessing = false;
+  final List<String> processingSteps = [];
+  String? pendingMessage;
+
+  AgentManager() {
+    // 默认不自动初始化，由外部显式调用 preload
+  }
+
+  void preload() {
+    if (isInitialized || isInitializing) return;
+    
+    // 延迟加载，确保应用首屏渲染体验不受影响
+    Future.delayed(const Duration(seconds: 1), () {
+      if (!isInitialized && !isInitializing) {
+        _initAsync();
+      }
+    });
+  }
+
+  Future<void> _initAsync() async {
+    isInitializing = true;
+    notifyListeners();
+
+    try {
+      await agent.initialize(modelPath: "assets/models/gemma-2b-q4.bin");
+      isInitialized = true;
+      if (agent.isLowMemory) {
+        chatHistory.add({
+          "role": "system",
+          "text": "⚠️ 检测到设备可用内存不足，已自动为您开启省内存模式 (可能会影响回复速度)。",
+        });
+      } else {
+        chatHistory.add({
+          "role": "system",
+          "text": "⚡️ 端侧 AI 已就绪。您的对话数据完全本地处理，无需联网。",
+        });
+      }
+    } catch (e) {
+      isError = true;
+      chatHistory.add({
+        "role": "system",
+        "text": "⚠️ 未检测到本地模型文件。已自动切换到模拟推理模式。\n您可以说：“有点冷” 或 “把灯打开”",
+      });
+    } finally {
+      isInitializing = false;
+      notifyListeners();
+      _checkProactiveRecommendations();
+      _processPendingMessage();
+    }
+  }
+
+  void _checkProactiveRecommendations() async {
+    await Future.delayed(const Duration(seconds: 2));
+    final hour = DateTime.now().hour;
+    if (hour >= 22 || hour < 6) {
+      chatHistory.add({
+        "role": "agent",
+        "text": "🌙 发现现在已经很晚了，是否需要为您开启「睡眠模式」？(将关闭所有灯光和电视，空调调至 26度)",
+        "isProactive": true,
+        "suggestionAction": "睡眠模式",
+      });
+      notifyListeners();
+    } else if (hour >= 18 && hour < 22) {
+      chatHistory.add({
+        "role": "agent",
+        "text": "👋 欢迎回家！检测到客厅光线较暗，是否为您开启「回家模式」？",
+        "isProactive": true,
+        "suggestionAction": "回家模式",
+      });
+      notifyListeners();
+    }
+  }
+
+  void addProcessingStep(String step) {
+    if (!processingSteps.contains(step)) {
+      processingSteps.add(step);
+      notifyListeners();
+    }
+  }
+
+  void clearProcessingSteps() {
+    processingSteps.clear();
+    notifyListeners();
+  }
+
+  Future<void> _processPendingMessage() async {
+    chatHistory.removeWhere((msg) => msg['isPendingTip'] == true);
+    notifyListeners();
+
+    if (pendingMessage != null) {
+      final msg = pendingMessage!;
+      pendingMessage = null;
+      await handleSendMessage(msg, fromPending: true);
+    }
+  }
+
+  Future<void> handleSendMessage(String text, {bool fromPending = false}) async {
+    if (text.isEmpty) return;
+
+    if (!fromPending) {
+      chatHistory.add({"role": "user", "text": text});
+    }
+    isProcessing = true;
+    notifyListeners();
+
+    if (isInitializing) {
+      pendingMessage = text;
+      chatHistory.add({
+        "role": "system",
+        "text": "正在唤醒 AI，准备完成后将立即为您执行该指令...",
+        "isPendingTip": true,
+      });
+      notifyListeners();
+      return;
+    }
+
+    await _executeMessage(text);
+  }
+
+  Future<void> _executeMessage(String text) async {
+    clearProcessingSteps();
+    
+    // 延迟一点以展示 UI 加载动画
+    await Future.delayed(const Duration(milliseconds: 500));
+
+    String responseText = "指令已执行。";
+    List<Map<String, dynamic>> affectedDevices = [];
+    Map<String, dynamic>? beforeState;
+    Map<String, dynamic>? afterState;
+    PerformanceMetrics? metrics;
+
+    try {
+      final result = await agent.handleUserQuery(
+        text,
+        availableDevices: deviceManager.devices,
+        onProgress: (step) {
+          addProcessingStep(step);
+        },
+      );
+
+      metrics = result.metrics;
+
+      if (result.success) {
+        if (result.intent != null && result.intent?.deviceId != 'system') {
+          final intent = result.intent!;
+          final isOn = intent.action == 'turn_on' || intent.action == 'set_temp';
+          
+          final stateChanges = await deviceManager.setDeviceStateById(
+            intent.deviceId, 
+            isOn, 
+            value: intent.value,
+          );
+          
+          if (stateChanges != null) {
+            beforeState = stateChanges['before'];
+            afterState = stateChanges['after'];
+            affectedDevices = [afterState!];
+            
+            responseText = "🤖 已为您执行：${intent.action == 'turn_on' ? '打开' : intent.action == 'turn_off' ? '关闭' : '调节'}了 ${afterState['name'] ?? intent.deviceId}";
+            if (intent.value != null) {
+               responseText += " (参数: ${intent.value})";
+            }
+          } else {
+            throw Exception("Exact device not found by ID: ${intent.deviceId}");
+          }
+        } else {
+          responseText = "🤖 ${result.message ?? '已完成'}";
+        }
+      } else {
+        responseText = "❌ 抱歉，未能识别该指令关联的设备。(${result.message ?? ''})";
+      }
+    } catch (e) {
+      addProcessingStep("理解用户意图并检索日志... \n[RAG] ${text.contains("日志") ? '命中记录' : '无需检索'}");
+      await Future.delayed(const Duration(milliseconds: 300));
+      addProcessingStep("构建设备上下文环境... \n[Devices] 当前可控设备 ${deviceManager.devices.length} 台");
+      await Future.delayed(const Duration(milliseconds: 300));
+      addProcessingStep("调用端侧大模型进行推理... \n[Prompt] 正在构建本地指令集及当前状态信息...");
+      await Future.delayed(const Duration(milliseconds: 400));
+      addProcessingStep("解析并执行控制指令... \n[Action] 准备分发设备控制协议");
+
+      final isContinuing = chatHistory.length > 2 && text.length < 5;
+      final fallbackService = FallbackIntentService(deviceManager);
+      final fallbackResult = await fallbackService.handleFallbackIntent(text, isContinuing);
+      
+      responseText = fallbackResult.responseText;
+      affectedDevices = fallbackResult.affectedDevices;
+      beforeState = fallbackResult.beforeState;
+      afterState = fallbackResult.afterState;
+
+      agent.contextProvider.addMessage('user', text);
+      agent.contextProvider.addMessage('agent', responseText);
+    }
+
+    isProcessing = false;
+    chatHistory.add(<String, dynamic>{
+      "role": "agent",
+      "text": responseText,
+      if (affectedDevices.isNotEmpty) "devices": affectedDevices,
+      "beforeState": beforeState,
+      "afterState": afterState,
+      "metrics": metrics,
+      "steps": List<String>.from(processingSteps),
+    }..removeWhere((key, value) => value == null));
+    
+    notifyListeners();
+  }
+}
+
+final agentManager = AgentManager();
 
 class SmartHomeApp extends StatelessWidget {
   const SmartHomeApp({super.key});
@@ -1726,261 +1948,39 @@ class _AgentScreenState extends State<AgentScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
 
-  final List<Map<String, dynamic>> _chatHistory = [];
-  bool _isInitializing = false;
-  bool _isProcessing = false;
   bool _isListening = false; // 语音状态
 
-  final List<String> _processingSteps = [];
   bool _isProcessingStepsExpanded = true;
   double _processingStepsFontSize = 12.0;
-
-  late final SmartHomeAgent _agent;
-
-  String? _pendingMessage;
 
   @override
   void initState() {
     super.initState();
-    _agent = SmartHomeAgent();
-    _initAgent();
-  }
-
-  Future<void> _initAgent() async {
-    setState(() {
-      _isInitializing = true;
-    });
-
-    try {
-      // 尝试真实加载底层模型
-      await _agent.initialize(modelPath: "assets/models/gemma-2b-q4.bin");
-
-      if (!mounted) return;
-      setState(() {
-        _isInitializing = false;
-        if (_agent.isLowMemory) {
-          _chatHistory.add({
-            "role": "system",
-            "text": "⚠️ 检测到设备可用内存不足，已自动为您开启省内存模式 (可能会影响回复速度)。",
-          });
-        } else {
-          _chatHistory.add({
-            "role": "system",
-            "text": "⚡️ 端侧 AI 已就绪。您的对话数据完全本地处理，无需联网。",
-          });
-        }
-      });
-
-      // 模拟主动推荐引擎 (Proactive Engine)
-      _checkProactiveRecommendations();
-      _processPendingMessage();
-    } catch (e) {
-      if (!mounted) return;
-      setState(() {
-        _isInitializing = false;
-        // 如果没有 GGUF 文件，回退到 Mock 提示
-        _chatHistory.add({
-          "role": "system",
-          "text": "⚠️ 未检测到本地模型文件。已自动切换到模拟推理模式。\n您可以说：“有点冷” 或 “把灯打开”",
-        });
-      });
-
-      // Mock 模式下也触发主动推荐
-      _checkProactiveRecommendations();
-      _processPendingMessage();
-    }
-  }
-
-  void _checkProactiveRecommendations() async {
-    // 延迟一段时间，模拟后台分析
-    await Future.delayed(const Duration(seconds: 3));
-
-    if (!mounted) return;
-
-    // 基于时间的简单规则引擎 (Mock)
-    final hour = DateTime.now().hour;
-    if (hour >= 22 || hour < 6) {
-      setState(() {
-        _chatHistory.add({
-          "role": "agent",
-          "text": "🌙 发现现在已经很晚了，是否需要为您开启「睡眠模式」？(将关闭所有灯光和电视，空调调至 26度)",
-          "isProactive": true,
-          "suggestionAction": "睡眠模式",
-        });
-      });
+    // 添加监听，当 agentManager 状态改变时刷新 UI
+    agentManager.addListener(_onAgentUpdate);
+    // 首次进入时可能已经有消息了，滚动到底部
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottom();
-    } else if (hour >= 18 && hour < 22) {
-      setState(() {
-        _chatHistory.add({
-          "role": "agent",
-          "text": "👋 欢迎回家！检测到客厅光线较暗，是否为您开启「回家模式」？",
-          "isProactive": true,
-          "suggestionAction": "回家模式",
-        });
-      });
+    });
+  }
+
+  @override
+  void dispose() {
+    agentManager.removeListener(_onAgentUpdate);
+    super.dispose();
+  }
+
+  void _onAgentUpdate() {
+    if (mounted) {
+      setState(() {});
       _scrollToBottom();
     }
   }
 
   Future<void> _handleSendMessage(String text) async {
     if (text.isEmpty) return;
-
-    setState(() {
-      _chatHistory.add({"role": "user", "text": text});
-      _isProcessing = true;
-      _textController.clear();
-    });
-
-    _scrollToBottom();
-
-    if (_isInitializing) {
-      _pendingMessage = text;
-      setState(() {
-        _chatHistory.add({
-          "role": "system",
-          "text": "正在唤醒 AI，准备完成后将立即为您执行该指令...",
-          "isPendingTip": true,
-        });
-      });
-      _scrollToBottom();
-      return;
-    }
-
-    await _executeMessage(text);
-  }
-
-  Future<void> _processPendingMessage() async {
-    setState(() {
-      _chatHistory.removeWhere((msg) => msg['isPendingTip'] == true);
-    });
-
-    if (_pendingMessage != null) {
-      final msg = _pendingMessage!;
-      _pendingMessage = null;
-      await _executeMessage(msg);
-    }
-  }
-
-  Future<void> _executeMessage(String text) async {
-    setState(() {
-      _processingSteps.clear();
-      _isProcessingStepsExpanded = true;
-    });
-
-    // 延迟一点以展示 UI 加载动画
-    await Future.delayed(const Duration(milliseconds: 500));
-
-    String responseText = "指令已执行。";
-    List<Map<String, dynamic>> affectedDevices = [];
-    Map<String, dynamic>? beforeState;
-    Map<String, dynamic>? afterState;
-    PerformanceMetrics? metrics;
-
-    try {
-      final result = await _agent.handleUserQuery(
-        text,
-        availableDevices: deviceManager.devices,
-        onProgress: (step) {
-          if (mounted) {
-            setState(() {
-              if (!_processingSteps.contains(step)) {
-                _processingSteps.add(step);
-              }
-            });
-            _scrollToBottom();
-          }
-        },
-      );
-
-      metrics = result.metrics;
-
-      if (result.success) {
-        if (result.intent != null && result.intent?.deviceId != 'system') {
-          // 真正的设备控制
-          final intent = result.intent!;
-          final isOn = intent.action == 'turn_on' || intent.action == 'set_temp';
-          
-          final stateChanges = await deviceManager.setDeviceStateById(
-            intent.deviceId, 
-            isOn, 
-            value: intent.value,
-          );
-          
-          if (stateChanges != null) {
-            beforeState = stateChanges['before'];
-            afterState = stateChanges['after'];
-            affectedDevices = [afterState!];
-            
-            // 只有成功找到设备并改变状态才算真正执行成功
-            responseText = "🤖 已为您执行：${intent.action == 'turn_on' ? '打开' : intent.action == 'turn_off' ? '关闭' : '调节'}了 ${afterState['name'] ?? intent.deviceId}";
-            if (intent.value != null) {
-               responseText += " (参数: ${intent.value})";
-            }
-          } else {
-            // 解析到了意图，但是设备管理器里没找到这个设备，可能只是想打开当前界面里的某个大类设备（如：有点冷->开空调）
-            // 抛出异常走 Fallback 模糊意图降级体验
-            throw Exception("Exact device not found by ID: ${intent.deviceId}, fallback to fuzzy match");
-          }
-        } else {
-          // RAG 或纯回复
-          responseText = "🤖 ${result.message ?? '已完成'}";
-        }
-      } else {
-        responseText = "❌ 抱歉，未能识别该指令关联的设备。(${result.message ?? ''})";
-      }
-    } catch (e) {
-      // 模拟一些处理步骤用于UI展示
-      if (mounted) {
-        setState(() => _processingSteps.add("理解用户意图并检索日志... \n[RAG] ${text.contains("日志") ? '命中记录' : '无需检索'}"));
-      }
-      await Future.delayed(const Duration(milliseconds: 300));
-      if (mounted) {
-        setState(() => _processingSteps.add("构建设备上下文环境... \n[Devices] 当前可控设备 ${deviceManager.devices.length} 台"));
-      }
-      await Future.delayed(const Duration(milliseconds: 300));
-      if (mounted) {
-        setState(() => _processingSteps.add("调用端侧大模型进行推理... \n[Prompt] 正在构建本地指令集及当前状态信息..."));
-      }
-      await Future.delayed(const Duration(milliseconds: 400));
-      if (mounted) {
-        setState(() => _processingSteps.add("解析并执行控制指令... \n[Action] 准备分发设备控制协议"));
-      }
-
-      // 获取当前对话上下文来增强 Fallback
-      final isContinuing = _chatHistory.length > 2 && text.length < 5;
-
-      // Fallback 体验，并联动全局状态 (重构后使用独立的 FallbackIntentService)
-      final fallbackService = FallbackIntentService(deviceManager);
-      final fallbackResult = await fallbackService.handleFallbackIntent(text, isContinuing);
-      
-      responseText = fallbackResult.responseText;
-      affectedDevices = fallbackResult.affectedDevices;
-      beforeState = fallbackResult.beforeState;
-      afterState = fallbackResult.afterState;
-
-      _agent.contextProvider.addMessage('user', text);
-      _agent.contextProvider.addMessage('agent', responseText);
-        _agent.contextProvider.addMessage('user', text);
-        _agent.contextProvider.addMessage('agent', responseText);
-      } else {
-        responseText = "🤖 抱歉，我不太明白您的意思。您可以尝试让我控制空调、灯光或电视。";
-      }
-    }
-
-    setState(() {
-      _isProcessing = false;
-      _chatHistory.add(<String, dynamic>{
-        "role": "agent",
-        "text": responseText,
-        if (affectedDevices.isNotEmpty) "devices": affectedDevices,
-        "beforeState": beforeState,
-        "afterState": afterState,
-        "metrics": metrics,
-        "steps": List<String>.from(_processingSteps), // 保存当前的思维链
-      }..removeWhere((key, value) => value == null));
-    });
-
-    _scrollToBottom();
+    _textController.clear();
+    await agentManager.handleSendMessage(text);
   }
 
   void _toggleVoiceInput() async {
@@ -1990,23 +1990,23 @@ class _AgentScreenState extends State<AgentScreen> {
 
     if (_isListening) {
       // 模拟语音录入 UI 状态
-      setState(() {
-        _chatHistory.add({
-          "role": "system",
-          "text": "🎙️ 正在聆听 (端侧 ASR 识别中)...",
-          "isVoiceIndicator": true,
-        });
+      agentManager.chatHistory.add({
+        "role": "system",
+        "text": "🎙️ 正在聆听 (端侧 ASR 识别中)...",
+        "isVoiceIndicator": true,
       });
-      _scrollToBottom();
+      agentManager.notifyListeners();
 
       // 模拟录音和端侧 ASR (Whisper) 转换时间
       await Future.delayed(const Duration(seconds: 2));
 
       // 移除聆听指示器
+      agentManager.chatHistory.removeWhere((msg) => msg['isVoiceIndicator'] == true);
+      
       setState(() {
-        _chatHistory.removeWhere((msg) => msg['isVoiceIndicator'] == true);
         _isListening = false;
       });
+      agentManager.notifyListeners();
 
       // 模拟 ASR 识别结果并直接发送
       final asrResult = "帮我把主卧空调温度调高一点";
@@ -2197,15 +2197,15 @@ class _AgentScreenState extends State<AgentScreen> {
           ),
           
           // Steps list
-          if (_isProcessingStepsExpanded && _processingSteps.isNotEmpty)
+          if (_isProcessingStepsExpanded && agentManager.processingSteps.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(left: 44.0, right: 16.0, bottom: 16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: _processingSteps.asMap().entries.map((entry) {
+                children: agentManager.processingSteps.asMap().entries.map((entry) {
                   final index = entry.key;
                   final step = entry.value;
-                  final isLast = index == _processingSteps.length - 1;
+                  final isLast = index == agentManager.processingSteps.length - 1;
                   
                   return Padding(
                     padding: const EdgeInsets.only(bottom: 8.0),
@@ -2245,16 +2245,16 @@ class _AgentScreenState extends State<AgentScreen> {
     return Column(
       children: [
         // 聊天记录展示区
-        if (_isInitializing && _chatHistory.isEmpty)
+        if (agentManager.isInitializing && agentManager.chatHistory.isEmpty)
           _buildWelcomeLoading()
         else
           Expanded(
             child: ListView.builder(
               controller: _scrollController,
               padding: const EdgeInsets.all(16),
-              itemCount: _chatHistory.length,
+              itemCount: agentManager.chatHistory.length,
               itemBuilder: (context, index) {
-                final msg = _chatHistory[index];
+                final msg = agentManager.chatHistory[index];
                 final role = msg['role'];
                 final text = msg['text'];
 
@@ -2268,11 +2268,11 @@ class _AgentScreenState extends State<AgentScreen> {
           ),
 
         // 处理中的思考动画及进度
-        if (_isProcessing)
+        if (agentManager.isProcessing)
           _buildProcessingSteps(),
 
         // 快捷指令推荐
-        if (!_isInitializing && !_isProcessing) _buildQuickCommands(),
+        if (!agentManager.isInitializing && !agentManager.isProcessing) _buildQuickCommands(),
 
         // 底部输入区
         Container(
@@ -2289,7 +2289,7 @@ class _AgentScreenState extends State<AgentScreen> {
                         ? colorScheme.error
                         : colorScheme.primary,
                   ),
-                  onPressed: (_isInitializing || _isProcessing)
+                  onPressed: (agentManager.isInitializing || agentManager.isProcessing)
                       ? null
                       : _toggleVoiceInput,
                 ),
@@ -2301,9 +2301,9 @@ class _AgentScreenState extends State<AgentScreen> {
                     ),
                     child: TextField(
                         controller: _textController,
-                        enabled: !_isProcessing,
+                        enabled: !agentManager.isProcessing,
                         decoration: InputDecoration(
-                          hintText: _isInitializing
+                          hintText: agentManager.isInitializing
                               ? 'AI唤醒中，您可以直接输入...'
                               : '输入指令 (如: 我有点冷)',
                           border: InputBorder.none,
@@ -2320,7 +2320,7 @@ class _AgentScreenState extends State<AgentScreen> {
                   // 发送按钮
                   IconButton.filled(
                     icon: const Icon(Icons.arrow_upward),
-                    onPressed: _isProcessing
+                    onPressed: agentManager.isProcessing
                         ? null
                         : () => _handleSendMessage(_textController.text.trim()),
                   ),

@@ -488,6 +488,40 @@ To use real on-device inference instead of the mock engine:
 
 ## 🧩 Monorepo 结构与关键入口 (Project Layout & Key Entry Points)
 
+本项目基于 Monorepo 架构进行统一管理，核心业务模块拆分如下：
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'tertiaryColor': '#161b22', 'fontFamily': 'monospace', 'fontSize': '14px'}}}%% 
+graph TD 
+    classDef core fill:#161b22,stroke:#3fb950,stroke-width:2px,color:#c9d1d9; 
+    classDef infra fill:#161b22,stroke:#d29922,stroke-width:2px,color:#c9d1d9; 
+    classDef ghost fill:#0d1117,stroke:#8b949e,stroke-width:1px,stroke-dasharray: 5 5,color:#8b949e; 
+
+    SHP["smart_home_projects/ (智能管家主干仓库)"]:::core
+    
+    subgraph CoreRepo ["核心业务模块 (Core Modules)"] 
+        direction TB 
+        Frontend["fronted_project/ (Flutter 端侧 AI 引擎)"]:::core 
+        Backend["backed_project/ (FastAPI 云端微服务)"]:::core 
+        ModelForge["model_forge/ (大模型合成与微调车间)"]:::core 
+        Docs["docs/ (全局架构与商业文档)"]:::core 
+    end 
+    
+    subgraph InfraEnv ["部署与基础设施 (Infrastructure)"] 
+        direction TB 
+        Deploy["deploy/ (Nginx, MQTT, Prometheus 挂载与配置)"]:::infra 
+    end 
+    
+    subgraph Legacy ["归档区 (Archived)"] 
+        direction TB 
+        Archived["archived/ (历史版本与脚手架)"]:::ghost 
+    end 
+
+    SHP --> CoreRepo 
+    SHP --> InfraEnv 
+    SHP --> Legacy 
+```
+
 - UI 入口与演示
   - [main.dart](fronted_project/lib/main.dart)
   - 设备模型：[device.dart](fronted_project/lib/models/device.dart)

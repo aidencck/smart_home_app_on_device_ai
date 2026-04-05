@@ -1,12 +1,14 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
 export "FLUTTER_ROOT=/Users/aiden/flutter"
-export "FLUTTER_APPLICATION_PATH=/Users/aiden/Documents/macinit/smarthome APP/smart_home_app"
+export "FLUTTER_APPLICATION_PATH=/Users/aiden/Projects/macinit/smart_home_projects/fronted_project"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
+export "FLUTTER_TARGET=/var/folders/zz/bk9z60h167x0n99gbw_zj9n40000gn/T/flutter_tools.fgFfY4/flutter_test_listener.ayRRNL/listener.dart"
 export "FLUTTER_BUILD_DIR=build"
 export "FLUTTER_BUILD_NAME=1.0.0"
 export "FLUTTER_BUILD_NUMBER=1"
+export "DART_DEFINES=RkxVVFRFUl9WRVJTSU9OPTMuNDEuNQ==,RkxVVFRFUl9DSEFOTkVMPXN0YWJsZQ==,RkxVVFRFUl9HSVRfVVJMPWh0dHBzOi8vZ2l0aHViLmNvbS9mbHV0dGVyL2ZsdXR0ZXIuZ2l0,RkxVVFRFUl9GUkFNRVdPUktfUkVWSVNJT049MmM5ZWIyMDczOQ==,RkxVVFRFUl9FTkdJTkVfUkVWSVNJT049MDUyZjMxZDExNQ==,RkxVVFRFUl9EQVJUX1ZFUlNJT049My4xMS4z,SU5URUdSQVRJT05fVEVTVF9TSE9VTERfUkVQT1JUX1JFU1VMVFNfVE9fTkFUSVZFPWZhbHNl"
 export "DART_OBFUSCATION=false"
 export "TRACK_WIDGET_CREATION=true"
 export "TREE_SHAKE_ICONS=false"
-export "PACKAGE_CONFIG=.dart_tool/package_config.json"
+export "PACKAGE_CONFIG=/Users/aiden/Projects/macinit/smart_home_projects/fronted_project/.dart_tool/package_config.json"

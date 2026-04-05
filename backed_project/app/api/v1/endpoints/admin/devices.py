@@ -10,7 +10,7 @@ from pydantic import BaseModel
 from app.schemas.device import DeviceCreate, DeviceUpdate
 from app.schemas.device import Device as DeviceResponse
 from app.api import deps
-from app.db.session import get_db
+from app.api.deps import get_db
 from app.models.device import Device
 from app.models.product import Product
 from app.models.user import User

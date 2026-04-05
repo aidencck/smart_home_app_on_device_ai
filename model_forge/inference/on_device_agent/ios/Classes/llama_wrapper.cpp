@@ -17,17 +17,19 @@ struct LlamaWrapperContext {
 };
 
 // 1. 初始化模型
-void* llama_init_wrapper(const char* model_path) {
+void* llama_init_wrapper(const char* model_path, bool use_mmap, bool use_mlock, int n_gpu_layers, int n_threads) {
     printf("[llama.cpp wrapper] 初始化后端...\n");
     llama_backend_init();
 
     LlamaWrapperContext* wrapper_ctx = new LlamaWrapperContext();
     wrapper_ctx->model_path = model_path;
 
-    printf("[llama.cpp wrapper] 加载模型: %s\n", model_path);
+    printf("[llama.cpp wrapper] 加载模型: %s (mmap: %d, gpu_layers: %d, threads: %d)\n", model_path, use_mmap, n_gpu_layers, n_threads);
     llama_model_params model_params = llama_model_default_params();
     // Enable Metal on iOS/macOS or other GPU backends if available
-    model_params.n_gpu_layers = 99; 
+    model_params.n_gpu_layers = n_gpu_layers; 
+    model_params.use_mmap = use_mmap;
+    model_params.use_mlock = use_mlock;
 
     wrapper_ctx->model = llama_model_load_from_file(model_path, model_params);
     if (!wrapper_ctx->model) {
@@ -38,6 +40,8 @@ void* llama_init_wrapper(const char* model_path) {
 
     llama_context_params ctx_params = llama_context_default_params();
     ctx_params.n_ctx = 2048; // Context size
+    ctx_params.n_threads = n_threads;
+    ctx_params.n_threads_batch = n_threads;
     
     wrapper_ctx->ctx = llama_init_from_model(wrapper_ctx->model, ctx_params);
     if (!wrapper_ctx->ctx) {

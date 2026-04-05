@@ -2,7 +2,7 @@
 class LlamaCppBindings {
   LlamaCppBindings(String libraryPath);
 
-  dynamic initModel(String modelPath) {
+  dynamic initModel(String modelPath, {bool useMmap = true, bool useMlock = false, int nGpuLayers = 99, int nThreads = 4}) {
     return null;
   }
 

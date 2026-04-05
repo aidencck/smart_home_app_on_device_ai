@@ -42,9 +42,9 @@ class AIService:
                 # 使用 Redis 中存储的设备版本号进行校验，取代原先有缺陷的物理时钟比对
                 # 真实的实现中，应该是端侧维护一个递增的 version，如果端侧 version < 云端 version，则认定为过期
                 # 这里为了兼容现有代码，我们通过 Redis 获取设备的 latest_version（对应原有的 last_update_ts 字段，现在它应该是一个递增计数器）
-                cloud_version_str = await redis.hget(f"device:shadow:{device.device_id}", "last_update_ts")
-                if cloud_version_str:
-                    cloud_version = int(cloud_version_str)
+                from app.services.device_service import DeviceService
+                cloud_version = await DeviceService.get_device_version(redis, device.device_id)
+                if cloud_version is not None:
                     # 如果端侧上报的版本号落后于云端记录的版本号，说明状态已过期
                     if device.last_update_ts < cloud_version:
                         logger.warning(f"Device {device.device_id} version is stale. Cloud: {cloud_version}, Edge: {device.last_update_ts}")
@@ -118,8 +118,8 @@ class AIService:
             )
             
         except Exception as e:
-            # 致命修复：遇到任何异常（大模型超时、状态过期等），必须主动释放防重放锁
-            # 否则用户在接下来的 24 小时内（原为 300s）将无法重试该指令
-            await redis.delete(idempotency_key)
-            logger.error(f"Error processing command, idempotency lock released for {request.command_id}")
+            # 安全修复：发生异常时不再暴力删除锁（会导致重放攻击穿透），
+            # 而是将状态更新为 failed，并设置一个极短的重试窗口（如 5 秒），防止恶意请求无脑刷
+            await redis.setex(idempotency_key, 5, "failed")
+            logger.error(f"Error processing command, idempotency lock set to failed with 5s TTL for {request.command_id}")
             raise e

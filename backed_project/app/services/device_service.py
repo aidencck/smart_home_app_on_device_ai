@@ -3,6 +3,8 @@ from app.core.exceptions import AppException, ErrorCode
 from redis.asyncio import Redis
 from app.core.logger import logger
 
+from typing import Optional
+
 class DeviceService:
     # 修复并发竞态 (TOCTOU) 及 Lua 脚本的类型安全防崩溃问题
     LUA_UPDATE_SHADOW = """
@@ -21,6 +23,17 @@ class DeviceService:
     redis.call('EXPIRE', KEYS[1], tonumber(ARGV[3]))
     return 1 -- 更新成功
     """
+
+    @staticmethod
+    async def get_device_version(redis: Redis, device_id: str) -> Optional[int]:
+        """
+        防腐层接口：供其他微服务（如 AI 网关）查询设备的版本号，
+        避免跨领域直接访问 Redis 数据结构。
+        """
+        cloud_version_str = await redis.hget(f"device:shadow:{device_id}", "last_update_ts")
+        if cloud_version_str:
+            return int(cloud_version_str)
+        return None
 
     @staticmethod
     async def update_shadow_batch(redis: Redis, batch_data: DeviceShadowBatchUpdate) -> dict:

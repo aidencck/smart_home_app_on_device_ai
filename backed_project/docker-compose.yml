@@ -1,10 +1,10 @@
 services:
-  # FastAPI Backend Service
-  api:
+  # AI Gateway Microservice
+  ai_gateway:
     build: 
       context: .
       dockerfile: Dockerfile
-    container_name: smarthome_api
+    container_name: smarthome_ai_gateway
     restart: unless-stopped
     ports:
       - "8000:8000"
@@ -18,6 +18,88 @@ services:
     environment:
       - POSTGRES_SERVER=db
       - REDIS_HOST=redis
+      - SERVICE_ROLE=ai_gateway
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - smarthome_network
+
+  # Device Shadow Microservice
+  device_shadow:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: smarthome_device_shadow
+    restart: unless-stopped
+    ports:
+      - "8001:8000"
+    volumes:
+      - .:/app
+      - /app/__pycache__
+      - /app/.venv
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_SERVER=db
+      - REDIS_HOST=redis
+      - SERVICE_ROLE=device_shadow
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - smarthome_network
+
+  # IoT Core Platform Microservice
+  iot_core:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: smarthome_iot_core
+    restart: unless-stopped
+    ports:
+      - "8002:8000"
+    volumes:
+      - .:/app
+      - /app/__pycache__
+      - /app/.venv
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_SERVER=db
+      - REDIS_HOST=redis
+      - SERVICE_ROLE=iot_core
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - smarthome_network
+
+  # Data Flywheel & OTA Microservice
+  data_flywheel:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: smarthome_data_flywheel
+    restart: unless-stopped
+    ports:
+      - "8003:8000"
+    volumes:
+      - .:/app
+      - /app/__pycache__
+      - /app/.venv
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_SERVER=db
+      - REDIS_HOST=redis
+      - SERVICE_ROLE=data_flywheel
     depends_on:
       db:
         condition: service_healthy
