@@ -219,59 +219,61 @@ A next-generation Smart Home application demonstrating the **production-ready im
 ### 1. 业务流程与合规卡点 (Business Process Flow)
 展示从语音发起到设备响应的全生命周期，突出脱敏、认证与数据飞轮卡点。
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'tertiaryColor': '#161b22', 'fontFamily': 'monospace', 'fontSize': '14px'}}}%%
 graph TD
     classDef edge fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b;
     classDef cloud fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c;
     classDef warning fill:#ffebee,stroke:#d32f2f,stroke-width:2px,color:#b71c1c;
     classDef hardware fill:#e8f5e9,stroke:#388e3c,stroke-width:2px,color:#1b5e20;
 
-    Start([用户发起语音/文本指令]) --> A[端侧: ASR 转文本]
-    A:::edge --> B{是否触碰合规红线?}
-    B:::edge -->|"是 (高危/违规)"| C[端侧: 强制输出 action:none 拒答]
+    Start(["用户发起语音/文本指令"]) --> A["端侧: ASR 转文本"]
+    A:::edge --> B{"是否触碰合规红线?"}
+    B:::edge -->|"是 (高危/违规)"| C["端侧: 强制输出 action:none 拒答"]
     C:::warning
-    B -->|否| D{端侧: 意图复杂度评估}
+    B -->|"否"| D{"端侧: 意图复杂度评估"}
     D:::edge
     
-    D -->|"简单/高频"| E1[注入动态设备快照 Dynamic Context]
-    E1:::edge --> E[端侧 0.5B 模型本地纯闭环推理]
+    D -->|"简单/高频"| E1["注入动态设备快照 Dynamic Context"]
+    E1:::edge --> E["端侧 0.5B 模型本地纯闭环推理"]
     E:::edge
-    D -->|"复杂/长尾"| F[端侧: NER 隐私前置脱敏]
+    D -->|"复杂/长尾"| F["端侧: NER 隐私前置脱敏"]
     F:::warning
     
-    F --> G[请求云端 FastAPI 网关]
-    G:::cloud --> H{Semantic Cache 命中?}
+    F --> G["请求云端 FastAPI 网关"]
+    G:::cloud --> H{"Semantic Cache 命中?"}
     H:::cloud
     
-    H -->|是| I[返回缓存的纯 JSON 指令]
+    H -->|"是"| I["返回缓存的纯 JSON 指令"]
     I:::cloud
-    H -->|否| J[云端大模型推理 仅限内存阅后即焚]
+    H -->|"否"| J["云端大模型推理 仅限内存阅后即焚"]
     J:::cloud --> I
     
-    E --> K[合并纯 JSON 结果并验证严格格式]
+    E --> K["合并纯 JSON 结果并验证严格格式"]
     I --> K
     K:::edge
     
-    K --> L{涉及高危物理设备?}
-    L:::edge -->|"是 (如门锁)"| M[触发 FaceID/生物认证墙]
-    M:::warning -->|失败| End_Fail([拒绝执行])
-    M -->|成功| N[Executor: 下发局域网控制指令]
-    L -->|否| N
+    K --> L{"涉及高危物理设备?"}
+    L:::edge -->|"是 (如门锁)"| M["触发 FaceID/生物认证墙"]
+    M:::warning -->|"失败"| End_Fail(["拒绝执行"])
+    M -->|"成功"| N["Executor: 下发局域网控制指令"]
+    L -->|"否"| N
     N:::hardware
     
-    N --> O([设备响应并更新状态])
+    N --> O(["设备响应并更新状态"])
     O:::hardware
     
-    O -.->|异步| P[更新本地 Isar 数据库 AES-256加密]
+    O -.->|"异步"| P["更新本地 Isar 数据库 AES-256加密"]
     P:::warning
-    O -.->|"异步检查"| Q{用户是否显式 Opt-in 授权?}
-    Q:::edge -->|否| End_Ignore([静默丢弃 不留存数据])
-    Q -->|是| R[上传脱敏/匿名化 Bad Cases 进飞轮]
+    O -.->|"异步检查"| Q{"用户是否显式 Opt-in 授权?"}
+    Q:::edge -->|"否"| End_Ignore(["静默丢弃 不留存数据"])
+    Q -->|"是"| R["上传脱敏/匿名化 Bad Cases 进飞轮"]
     R:::cloud
 ```
 
 ### 2. 产品与微服务架构 (Product Architecture)
 展示端侧重组件、云端微服务与物理终端的三层结构。
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'tertiaryColor': '#161b22', 'fontFamily': 'monospace', 'fontSize': '14px'}}}%%
 flowchart TB
     classDef edgeNode fill:#e1f5fe,stroke:#0288d1,stroke-width:2px,color:#01579b;
     classDef cloudNode fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#4a148c;
@@ -323,49 +325,50 @@ flowchart TB
 ### 3. 核心数据流转 (Core Data Flow)
 明确展示控制流、状态流以及带有强隐私隔离要求的数据飞轮流转路径。
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'tertiaryColor': '#161b22', 'fontFamily': 'monospace', 'fontSize': '14px'}}}%%
 flowchart LR
     subgraph user_side [用户侧]
-        User[用户]
+        User["用户"]
     end
     
     subgraph edge_domain [端侧域 - 高隐私]
-        App[Flutter App_Opt-in校验]
-        DB[(Isar 数据库_AES256_30天滚动)]
-        NER[NER 脱敏与标识符剥离]
-        Model[端侧 0.5B 模型]
+        App["Flutter App_Opt-in校验"]
+        DB[("Isar 数据库_AES256_30天滚动")]
+        NER["NER 脱敏与标识符剥离"]
+        Model["端侧 0.5B 模型"]
     end
     
     subgraph cloud_domain [云端业务域]
-        API[FastAPI 内存网关_SessionID轮换]
-        Shadow[(Redis 影子_动态探针)]
-        vLLM[vLLM 或 Enterprise API]
+        API["FastAPI 内存网关_SessionID轮换"]
+        Shadow[("Redis 影子_动态探针")]
+        vLLM["vLLM 或 Enterprise API"]
     end
     
     subgraph flywheel_domain [数据飞轮域 - 合规隔离]
-        Judge[LLM-as-a-Judge_二次隐私审查与质量过滤]
-        SFT[(包含负样本与长尾的 JSONL)]
-        Forge[Data Forge 模型合成]
+        Judge["LLM-as-a-Judge_二次隐私审查与质量过滤"]
+        SFT[("包含负样本与长尾的 JSONL")]
+        Forge["Data Forge 模型合成"]
     end
 
     %% 控制数据流
-    User -->|1. 语音指令_明文| App
-    App -->|2a. 本地快照注入| DB
-    DB -->|2b. 动态设备 Context| Model
-    App -->|3a. 复杂指令| NER
-    NER -->|3b. 剥离 PII 的匿名 Query| API
-    API -->|4. 最小化 Context 透传| vLLM
-    vLLM -->|5. 严格 JSON 控制指令| App
-    Model -->|5b. 严格 JSON 格式输出| App
+    User -->|"1. 语音指令_明文"| App
+    App -->|"2a. 本地快照注入"| DB
+    DB -->|"2b. 动态设备 Context"| Model
+    App -->|"3a. 复杂指令"| NER
+    NER -->|"3b. 剥离 PII 的匿名 Query"| API
+    API -->|"4. 最小化 Context 透传"| vLLM
+    vLLM -->|"5. 严格 JSON 控制指令"| App
+    Model -->|"5b. 严格 JSON 格式输出"| App
     
     %% 状态数据流
-    App -->|6. 状态增量_带时间戳| Shadow
+    App -->|"6. 状态增量_带时间戳"| Shadow
     
     %% 飞轮数据流
-    App -.->|7. 失败日志_强依赖 Opt-in 授权| API
-    API -.->|8. 临时 Session 关联日志| Judge
-    Judge -.->|9. 剔除噪音与遗漏 PII| SFT
-    SFT -.->|10. SFT或LoRA 微调| Forge
-    Forge -.->|11. OTA 分发新模型| Model
+    App -.->|"7. 失败日志_强依赖 Opt-in 授权"| API
+    API -.->|"8. 临时 Session 关联日志"| Judge
+    Judge -.->|"9. 剔除噪音与遗漏 PII"| SFT
+    SFT -.->|"10. SFT或LoRA 微调"| Forge
+    Forge -.->|"11. OTA 分发新模型"| Model
     
     style edge_domain fill:#e1f5fe,stroke:#3b82f6
     style flywheel_domain fill:#ffebee,stroke:#ef5350,stroke-dasharray: 5 5
@@ -374,6 +377,7 @@ flowchart LR
 ### 4. 关键交互时序 (Sequence Flow)
 展示复杂复合指令的端云并行处理与竞态防护机制。
 ```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#0d1117', 'primaryTextColor': '#c9d1d9', 'primaryBorderColor': '#58a6ff', 'lineColor': '#8b949e', 'tertiaryColor': '#161b22', 'fontFamily': 'monospace', 'fontSize': '14px'}}}%%
 sequenceDiagram
     autonumber
     participant User as "👤 用户"
@@ -569,7 +573,7 @@ graph TD
 
     SHP --> CoreRepo 
     SHP --> InfraEnv 
-    SHP --> Legacy 
+    SHP --> Legacy
 ```
 
 - UI 入口与演示
