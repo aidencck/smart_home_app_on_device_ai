@@ -1,0 +1,16 @@
+root ::= "{" ws "\"jsonrpc\"" ws ":" ws "\"2.0\"" ws "," ws request ws "," ws "\"id\"" ws ":" ws id ws "}"
+
+request ::= light-request | bed-request
+
+light-request ::= "\"method\"" ws ":" ws "\"set_light\"" ws "," ws "\"params\"" ws ":" ws light-params
+bed-request   ::= "\"method\"" ws ":" ws "\"set_bed\"" ws "," ws "\"params\"" ws ":" ws bed-params
+
+light-params ::= "{" ws "\"brightness\"" ws ":" ws brightness-val ws "," ws "\"color_temp\"" ws ":" ws color-temp-val ws "}"
+bed-params   ::= "{" ws "\"angle\"" ws ":" ws angle-val ws "}"
+
+brightness-val ::= [0-9] | [1-9] [0-9] | "100"
+color-temp-val ::= "2" [7-9] [0-9] [0-9] | [3-5] [0-9] [0-9] [0-9] | "6" [0-4] [0-9] [0-9] | "6500"
+angle-val      ::= [0-9] | [1-5] [0-9] | "60"
+
+id ::= [0-9]+ | "\"" [a-zA-Z0-9_-]+ "\""
+ws ::= [ \t\n]*

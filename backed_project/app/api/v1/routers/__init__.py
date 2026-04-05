@@ -1,1 +1,1 @@
-from . import ai, ota, data, devices
+from . import ai, ota, data, devices, home

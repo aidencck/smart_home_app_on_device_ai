@@ -9,9 +9,11 @@ from app.core.config import settings
 from app.core.logger import setup_logging, logger
 from app.core.exceptions import AppException, app_exception_handler, global_exception_handler, validation_exception_handler
 from app.db.redis import init_redis, close_redis
+import asyncio
+from app.tasks.offline_worker import start_offline_worker
 
 # AI Backend Routers
-from app.api.v1.routers import ai, ota, data, devices
+from app.api.v1.routers import ai, ota, data, devices, home
 
 # Placeholder for IoT Core Backend Routers (app/api/v1/endpoints/...)
 try:
@@ -29,9 +31,19 @@ async def lifespan(app: FastAPI):
     await init_redis()
     logger.info("Redis initialized.")
     
+    # Start background task for offline devices
+    offline_worker_task = asyncio.create_task(start_offline_worker())
+    logger.info("Background tasks started.")
+    
     yield
     
     # Shutdown execution
+    offline_worker_task.cancel()
+    try:
+        await offline_worker_task
+    except asyncio.CancelledError:
+        pass
+    
     logger.info(f"Shutting down SmartHome Backend... Role: {service_role}")
     await close_redis()
     logger.info("Redis connection closed.")
@@ -72,6 +84,9 @@ if service_role in ["all", "device_shadow"]:
 if service_role in ["all", "data_flywheel"]:
     app.include_router(ota.router, prefix=f"{settings.API_V1_STR}/ota", tags=["Model OTA"])
     app.include_router(data.router, prefix=f"{settings.API_V1_STR}/data", tags=["Data Flywheel"])
+
+if service_role in ["all", "iot_core", "device_shadow"]:
+    app.include_router(home.router, prefix=f"{settings.API_V1_STR}/home", tags=["Home Overview"])
 
 if service_role in ["all", "iot_core"] and admin_users and admin_products:
     app.include_router(admin_users.router, prefix=f"{settings.API_V1_STR}/admin/users", tags=["Admin Users"])

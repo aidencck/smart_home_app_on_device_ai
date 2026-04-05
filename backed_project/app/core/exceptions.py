@@ -17,6 +17,7 @@ class ErrorCode(int, Enum):
     UNAUTHORIZED = 401
     FORBIDDEN = 403
     NOT_FOUND = 404
+    CONFLICT = 409
     INTERNAL_SERVER_ERROR = 500
     
     # 业务特有错误

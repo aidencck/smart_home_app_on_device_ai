@@ -29,18 +29,13 @@ class Device(DeviceBase):
     class Config:
         orm_mode = True
 
-class DeviceBase(BaseModel):
-    name: str
-    product_id: str
+class DeviceStateUpdate(BaseModel):
+    state: str = Field(..., description="要更新的设备状态")
+    vector_clock: int = Field(..., description="当前持有的 vector_clock 值，用于并发冲突控制")
 
-class DeviceCreate(DeviceBase):
-    pass
+class DeviceBind(BaseModel):
+    device_id: str = Field(..., description="要绑定的设备唯一标识")
+    role: str = Field(default="owner", description="绑定角色 (owner, admin, user)")
 
-class DeviceUpdate(DeviceBase):
-    pass
-
-class Device(DeviceBase):
-    id: str
-    tenant_id: str
-    class Config:
-        orm_mode = True
+class DeviceHeartbeat(BaseModel):
+    device_id: str = Field(..., description="设备唯一标识")

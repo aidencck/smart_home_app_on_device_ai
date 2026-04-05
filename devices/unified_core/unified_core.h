@@ -1,32 +1,22 @@
 #ifndef UNIFIED_CORE_H
 #define UNIFIED_CORE_H
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-// 初始化端侧核心逻辑库
-bool unified_core_init(const char* db_path);
+// 初始化推理引擎 (例如: llama.cpp)
+// model_path: 模型文件的绝对路径
+// 返回值: 0 表示成功，非 0 表示失败
+int init_engine(const char* model_path);
 
-// 清理核心逻辑库，释放全局资源
-void unified_core_cleanup();
+// 处理意图推断请求
+// context_json: 包含当前上下文信息的 JSON 字符串 (如设备状态、用户指令等)
+// 返回值: 返回推断结果的 JSON 字符串指针 (需要调用 free_result 释放内存)
+const char* process_intent(const char* context_json);
 
-// 本地意图路由判断 (Local Router)
-// 返回 1 表示本地处理，0 表示需要上云
-int evaluate_intent_complexity(const char* intent_text);
-
-// 批量状态同步：收集当前 Isar 数据库中积压的设备状态
-// 返回 JSON 格式的 Batch 字符串 (需由调用方使用 unified_core_free_string 释放)
-char* collect_batch_device_states();
-
-// 释放由 unified_core 分配的字符串内存
-void unified_core_free_string(char* str);
-
-// 解析并下发控制指令给设备
-bool execute_device_command(const char* device_id, const char* action_json);
+// 释放 process_intent 返回的字符串内存
+void free_result(const char* result);
 
 #ifdef __cplusplus
 }

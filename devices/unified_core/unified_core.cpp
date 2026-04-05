@@ -1,72 +1,72 @@
 #include "unified_core.h"
-#include <string.h>
-#include <stdlib.h>
-#include <stdio.h>
+#include <iostream>
+#include <string>
+#include <cstring>
 
-// 模拟的全局状态
-static bool is_initialized = false;
-static char* current_db_path = NULL;
+// 内部状态
+static bool is_engine_initialized = false;
+static std::string current_model_path = "";
 
-bool unified_core_init(const char* db_path) {
-    if (db_path == NULL) return false;
-    
-    // 如果已经初始化过，先清理旧的资源
-    if (current_db_path != NULL) {
-        free(current_db_path);
+extern "C" {
+
+int init_engine(const char* model_path) {
+    if (!model_path) {
+        std::cerr << "[UnifiedCore] Error: model_path is null." << std::endl;
+        return -1;
     }
     
-    current_db_path = strdup(db_path);
-    is_initialized = true;
+    current_model_path = model_path;
+    is_engine_initialized = true;
     
-    // 初始化 SQLite / Isar 连接
-    printf("[UnifiedCore] Initialized with DB path: %s\n", db_path);
-    return true;
+    // TODO: 在这里对接 llama.cpp 的初始化逻辑
+    // 示例代码:
+    // llama_backend_init();
+    // llama_model_params model_params = llama_model_default_params();
+    // struct llama_model * model = llama_load_model_from_file(model_path, model_params);
+    // ...
+    
+    std::cout << "[UnifiedCore] Engine initialized successfully with model: " << current_model_path << std::endl;
+    return 0;
 }
 
-void unified_core_cleanup() {
-    if (current_db_path != NULL) {
-        free(current_db_path);
-        current_db_path = NULL;
-    }
-    is_initialized = false;
-    printf("[UnifiedCore] Cleaned up resources.\n");
-}
-
-int evaluate_intent_complexity(const char* intent_text) {
-    if (!is_initialized || intent_text == NULL) return 0;
-    
-    // 简单的意图判断：包含复杂条件词（如 "如果", "当...时", "明天"）则上云
-    if (strstr(intent_text, "如果") != NULL || strstr(intent_text, "当") != NULL) {
-        printf("[UnifiedCore] Complex intent detected, routing to cloud.\n");
-        return 0; // 上云
+const char* process_intent(const char* context_json) {
+    if (!is_engine_initialized) {
+        std::cerr << "[UnifiedCore] Error: Engine not initialized." << std::endl;
+        const char* err_msg = "{\"error\": \"Engine not initialized\"}";
+        char* result = new char[strlen(err_msg) + 1];
+        strcpy(result, err_msg);
+        return result;
     }
     
-    // 开关灯等直接命令留给本地 0.5B
-    printf("[UnifiedCore] Simple intent detected, handling locally.\n");
-    return 1; // 本地
+    if (!context_json) {
+        std::cerr << "[UnifiedCore] Error: context_json is null." << std::endl;
+        const char* err_msg = "{\"error\": \"Empty context\"}";
+        char* result = new char[strlen(err_msg) + 1];
+        strcpy(result, err_msg);
+        return result;
+    }
+
+    std::cout << "[UnifiedCore] Processing intent with context: " << context_json << std::endl;
+
+    // TODO: 在这里对接 llama.cpp 进行推断，并结合 GBNF 语法约束生成结构化 JSON
+    // 1. 将 context_json 转换为 Prompt，加入 system prompt 等
+    // 2. 配置 llama.cpp 的采样参数，并加载 GBNF grammar (限制输出为特定 JSON 格式)
+    // 3. 执行推断 (llama_decode, llama_sample_token 等)
+    // 4. 提取生成的 JSON 文本
+
+    // 下面为模拟的推断结果
+    std::string mock_response = "{\"intent\": \"turn_on_light\", \"confidence\": 0.95, \"target\": \"AA:BB:CC:DD:EE:01\"}";
+    
+    // 分配内存以返回给 Flutter 侧 (调用方需要调用 free_result 释放内存)
+    char* result = new char[mock_response.length() + 1];
+    strcpy(result, mock_response.c_str());
+    return result;
 }
 
-char* collect_batch_device_states() {
-    if (!is_initialized) return strdup("{}");
-    
-    // 模拟从数据库获取批量变更数据
-    // 实际上应该查询 Isar/SQLite 的未同步日志
-    const char* batch_json = "{\"updates\": [{\"device_id\": \"light_1\", \"state\": \"on\", \"last_update_ts\": 1680000000}]}";
-    
-    // 返回动态分配的内存，Dart 端通过 unified_core_free_string 释放
-    return strdup(batch_json);
-}
-
-void unified_core_free_string(char* str) {
-    if (str != NULL) {
-        free(str);
+void free_result(const char* result) {
+    if (result) {
+        delete[] result;
     }
 }
 
-bool execute_device_command(const char* device_id, const char* action_json) {
-    if (!is_initialized || device_id == NULL || action_json == NULL) return false;
-    
-    // 模拟通过 MQTT/Matter 协议下发物理设备控制
-    printf("[UnifiedCore] Executing command on device %s: %s\n", device_id, action_json);
-    return true;
-}
+} // extern "C"
