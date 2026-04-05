@@ -29,23 +29,23 @@
 
 ### 2.2 云端异步清洗 (LLM-as-a-Judge)
 *   **Celery + RabbitMQ 异步队列**：云端 FastAPI 接收到遥测日志后，迅速入队，防止主业务线程阻塞。
-*   **Judge 自动化打分**：见 [`backend/app/worker/tasks.py`](../backend/app/worker/tasks.py)。后台 Celery Worker 调用云端大模型（如 vLLM/OpenAI），作为“裁判 (Judge)”对脱敏日志进行二次隐私过滤、意图重构和质量打分。
+*   **Judge 自动化打分**：见 [`backend/app/worker/tasks.py`](../../backed_project/app/worker/tasks.py)。后台 Celery Worker 调用云端大模型（如 vLLM/OpenAI），作为“裁判 (Judge)”对脱敏日志进行二次隐私过滤、意图重构和质量打分。
 *   **高质量负样本萃取**：打分合格的日志将被格式化为 `JSONL` 格式，自动存入云端对象存储，作为下一轮 SFT（监督微调）的优质负样本数据池。
 
 ---
 
 ## 3. 模型训练与微调 (Model Forge)
 
-位于 [`model_forge/`](../model_forge/) 的“模型造车间”是我们提炼行业壁垒的核心基建。
+位于 [`model_forge/`](../../model_forge/training/) 的“模型造车间”是我们提炼行业壁垒的核心基建。
 
 ### 3.1 训练环境与技术栈
 *   **硬件底座**：全面适配 Apple Silicon (Mac M4) 的统一内存架构，使用 MLX 框架大幅降低训练成本。
-*   **数据工程**：通过 [`data_synthesis.py`](../model_forge/notebooks/data_synthesis.py) 生成涵盖动态设备快照、模糊意图覆盖的黄金训练集。
+*   **数据工程**：通过 [`data_synthesis.py`](../../model_forge/training/notebooks/data_synthesis.py) 生成涵盖动态设备快照、模糊意图覆盖的黄金训练集。
 
 ### 3.2 自动化微调流水线 (QLoRA Pipeline)
 *   **基础模型**：选用轻量级开源模型（如 Qwen-2.5-1.5B 或 Gemma-2B）作为底座。
 *   **微调策略**：采用 **QLoRA (Quantized Low-Rank Adaptation)**，仅更新极少量的权重参数，大幅降低显存占用。
-*   **执行脚本**：见 [`train.py`](../model_forge/scripts/train.py)。支持一键执行，自动加载云端汇聚的 JSONL 数据池进行持续迭代。
+*   **执行脚本**：见 [`train.py`](../../model_forge/training/scripts/train.py)。支持一键执行，自动加载云端汇聚的 JSONL 数据池进行持续迭代。
 
 ---
 
@@ -54,7 +54,7 @@
 这是支撑用户体验最核心的环节，实现了“快”与“智”的平衡。
 
 ### 4.1 端侧推理：零幻觉与极致响应
-*   **Llama.cpp 引擎绑定**：见 [`llama_bindings.dart`](../packages/on_device_agent/lib/src/engine/llama_cpp/llama_bindings.dart)。通过 Dart FFI 直接调用底层 C++ 推理库。
+*   **Llama.cpp 引擎绑定**：见 [`llama_bindings.dart`](../../model_forge/inference/on_device_agent/lib/src/engine/llama_cpp/llama_bindings.dart)。通过 Dart FFI 直接调用底层 C++ 推理库。
 *   **动态 GBNF 语法树**：在推理前，Agent 动态提取当前局域网内的真实设备 ID（如 `light_1`），将其编译为 C++ 采样约束。**从底层掐断了 AI 输出虚假设备的可能，实现 100% 的 JSON 格式命中率**。
 *   **本地 RAG**：查询“今天谁开过门”时，直接在本地 Isar 数据库进行毫秒级检索，断网可用且物理隔绝隐私。
 
@@ -69,8 +69,8 @@
 训练好的模型如何安全、高效地送到用户设备上？
 
 ### 5.1 模型量化与打包
-*   **极度量化**：微调后的模型经过 [`quantize.sh`](../model_forge/scripts/quantize.sh) 处理，转换为 `GGUF` 格式。通常采用 `Q4_K_M`（4-bit 量化）或更激进的 `IQ2_XXS`（2-bit 量化），将 2B 模型的内存占用压缩至 1.5GB 以下。
-*   **端侧 OTA 动态下发**：见 [`model_downloader.dart`](../packages/on_device_agent/lib/src/engine/model_downloader.dart)。App 启动时会校验本地模型版本，通过差异化下载 (Delta Update) 策略静默拉取最新的微调权重。
+*   **极度量化**：微调后的模型经过 [`quantize.sh`](../../model_forge/training/scripts/quantize.sh) 处理，转换为 `GGUF` 格式。通常采用 `Q4_K_M`（4-bit 量化）或更激进的 `IQ2_XXS`（2-bit 量化），将 2B 模型的内存占用压缩至 1.5GB 以下。
+*   **端侧 OTA 动态下发**：见 [`model_downloader.dart`](../../model_forge/inference/on_device_agent/lib/src/engine/model_downloader.dart)。App 启动时会校验本地模型版本，通过差异化下载 (Delta Update) 策略静默拉取最新的微调权重。
 
 ### 5.2 容器化云端基建
 *   **Docker 编排**：云端微服务（FastAPI, PostgreSQL, Redis, Celery, RabbitMQ）通过 `docker-compose.yml` 统一部署，确保开发、测试与生产环境的一致性。
@@ -86,7 +86,7 @@
 *   **实现策略**：模型加载（Mmap）、Prompt Tokenize 和推理解码循环全部压入独立的 Dart Isolate。通过异步端口 (SendPort/ReceivePort) 与主线程通信，确保在输出 Token 流时，UI 依然保持丝滑的 60fps。
 
 ### 6.2 全生命周期指标体系 (Full-Lifecycle Metrics Framework)
-根据 [`data_evaluation_and_acceptance_framework.md`](../model_forge/data_evaluation_and_acceptance_framework.md)，我们将指标划分为四大维度，贯穿从数据合成到业务上线的全过程：
+根据 [`data_evaluation_and_acceptance_framework.md`](../../model_forge/training/data_evaluation_and_acceptance_framework.md)，我们将指标划分为四大维度，贯穿从数据合成到业务上线的全过程：
 
 #### A. 数据质量与训练指标 (Data & Training Ops)
 决定了模型“吃进去的粮”和“消化能力”。

@@ -50,48 +50,48 @@ A next-generation Smart Home application demonstrating the **production-ready im
 
 欢迎来到 Smart Home On-Device AI Agent 仓库！为了让你快速找到所需内容，请根据你的角色选择入口：
 
-* 👉 **我是移动端/Flutter 开发者**：你想了解如何在设备端本地运行大模型，请直接阅读 [端侧 AI Agent 架构复盘与落地能力指南](docs/honest_architecture_reflection.md) 和 [Llama.cpp 引擎入口代码](packages/on_device_agent/lib/src/engine/llama_cpp/llama_engine.dart)。
-* 👉 **我是模型/算法工程师**：你想了解我们如何进行高质量数据合成与端侧模型微调，请前往 [Model Forge 目录说明](model_forge/README.md) 并阅读 [数据合成黄金规则](model_forge/data_evaluation_and_synthesis_rules.md)。
-* 👉 **我是后端/云服务架构师**：你想了解高隐私要求的端云架构与防并发竞态设计，请深入阅读 [端云协同架构落地方案 (基于 FastAPI)](docs/fastapi_edge_cloud_architecture.md)。
-* 👉 **我是产品经理/业务操盘手**：你想了解这个项目的商业价值与终极愿景，请阅读 [产品迭代愿景：从“被动控制”到“无感智能”](docs/product_vision_ice.md)。
+* 👉 **我是移动端/Flutter 开发者**：你想了解如何在设备端本地运行大模型，请直接阅读 [端侧 AI Agent 架构复盘与落地能力指南](docs/architecture/honest_architecture_reflection.md) 和 [Llama.cpp 引擎入口代码](model_forge/inference/on_device_agent/lib/src/engine/llama_cpp/llama_engine.dart)。
+* 👉 **我是模型/算法工程师**：你想了解我们如何进行高质量数据合成与端侧模型微调，请前往 [Model Forge 目录说明](model_forge/training/README.md) 并阅读 [数据合成黄金规则](model_forge/training/data_evaluation_and_synthesis_rules.md)。
+* 👉 **我是后端/云服务架构师**：你想了解高隐私要求的端云架构与防并发竞态设计，请深入阅读 [端云协同架构落地方案 (基于 FastAPI)](docs/architecture/fastapi_edge_cloud_architecture.md)。
+* 👉 **我是产品经理/业务操盘手**：你想了解这个项目的商业价值与终极愿景，请阅读 [产品迭代愿景：从“被动控制”到“无感智能”](docs/product/product_vision_ice.md)。
 
 ---
 
 ## 📚 项目文档 (Documentation)
 
 ### 1. 核心产品与战略 (Business & Strategy)
-* [🌌 产品迭代愿景：从“被动控制”到“无感智能” (Zero-UI Platform)](docs/product_vision_ice.md)
-* [开源协同与敏捷项目管理指南](docs/agile_project_management.md)
+* [🌌 产品迭代愿景：从“被动控制”到“无感智能” (Zero-UI Platform)](docs/product/product_vision_ice.md)
+* [开源协同与敏捷项目管理指南](docs/product/agile_project_management.md)
 
 ### 2. 架构设计与技术落地 (Architecture & Engineering)
-* [智能家居端侧 AI Agent 架构复盘与落地能力指南](docs/honest_architecture_reflection.md)
-* [智能家居端侧 AI Agent 架构复盘与落地能力指南（版本二）](docs/on_device_ai_architecture_review.md)
-* [智能家居端云协同架构落地方案 (基于 FastAPI) - 研发工程评审版](docs/fastapi_edge_cloud_architecture.md)
-* [智能家居端云协同 AI 架构设计方案](docs/edge_cloud_collaborative_architecture.md)
-* [端云协同大模型 AI Agent：全链路数据与部署架构解决方案](docs/full_lifecycle_ai_architecture_solution.md)
-* [🔗 **[New]** 智能家居全链路架构深度拆解：端云协同、IoT 通信与生态集成](docs/full_stack_architecture_decomposition.md)
-* [智能家居端云协同架构：商用化演进与盲区攻坚方案 (Architecture Evolution)](docs/architecture_evolution_and_blind_spots.md)
-* [智能家居 Matter 协议生态接入架构方案 (Matter Integration)](backend/docs/matter_integration_architecture.md)
-* [智能家居 Matter 对接项目排期与研发任务清单 (Matter Delivery Plan)](docs/matter_integration_project_schedule_and_task_breakdown.md)
-* [🔗 **[New]** 全球三大智能生态（Apple, Google, Alexa）接入产品战略与架构方案 (Ecosystem Integration)](docs/ecosystem_integration_strategy_apple_google_alexa.md)
-* [后端核心架构设计与演进路线 (Backend Architecture & Roadmap)](backend/docs/architecture.md)
-* [后端基建规划与 DDD 落地指南 (Infrastructure Design)](backend/docs/infrastructure_design.md)
-* [架构演进路线与遗留任务清单 (Architecture Roadmap)](backend/docs/architecture_roadmap.md)
+* [智能家居端侧 AI Agent 架构复盘与落地能力指南](docs/architecture/honest_architecture_reflection.md)
+* [智能家居端侧 AI Agent 架构复盘与落地能力指南（版本二）](docs/architecture/on_device_ai_architecture_review.md)
+* [智能家居端云协同架构落地方案 (基于 FastAPI) - 研发工程评审版](docs/architecture/fastapi_edge_cloud_architecture.md)
+* [智能家居端云协同 AI 架构设计方案](docs/architecture/edge_cloud_collaborative_architecture.md)
+* [端云协同大模型 AI Agent：全链路数据与部署架构解决方案](docs/architecture/full_lifecycle_ai_architecture_solution.md)
+* [🔗 **[New]** 智能家居全链路架构深度拆解：端云协同、IoT 通信与生态集成](docs/architecture/full_stack_architecture_decomposition.md)
+* [智能家居端云协同架构：商用化演进与盲区攻坚方案 (Architecture Evolution)](docs/architecture/architecture_evolution_and_blind_spots.md)
+* [智能家居 Matter 协议生态接入架构方案 (Matter Integration)](backed_project/docs/matter_integration_architecture.md)
+* [智能家居 Matter 对接项目排期与研发任务清单 (Matter Delivery Plan)](docs/architecture/matter_integration_project_schedule_and_task_breakdown.md)
+* [🔗 **[New]** 全球三大智能生态（Apple, Google, Alexa）接入产品战略与架构方案 (Ecosystem Integration)](docs/architecture/ecosystem_integration_strategy_apple_google_alexa.md)
+* [后端核心架构设计与演进路线 (Backend Architecture & Roadmap)](backed_project/docs/architecture.md)
+* [后端基建规划与 DDD 落地指南 (Infrastructure Design)](backed_project/docs/infrastructure_design.md)
+* [架构演进路线与遗留任务清单 (Architecture Roadmap)](backed_project/docs/architecture_roadmap.md)
 
 ### 3. 规范、运维与审计 (Standards, DevOps & Audit)
-* [🔗 **[New]** 后端 API 规范与全局异常处理标准 (API Standards)](backend/docs/api_standards.md)
-* [🔗 **[New]** Docker 容器化与开发环境配置指南 (Docker Guide)](backend/docs/docker_development_guide.md)
-* [🔗 **[New]** 后端并发防御架构与代码质量审计报告 (Architecture Audit)](backend/docs/code_review_and_architecture_audit.md)
-* [智能家居 AI 系统端到端隐私合规与数据安全方案](docs/ai_privacy_compliance_guidelines.md)
-* [端云协同 AI 系统数据地图与验证指导体系](docs/data_map_and_qa_lineage.md)
+* [🔗 **[New]** 后端 API 规范与全局异常处理标准 (API Standards)](backed_project/docs/api_standards.md)
+* [🔗 **[New]** Docker 容器化与开发环境配置指南 (Docker Guide)](backed_project/docs/docker_development_guide.md)
+* [🔗 **[New]** 后端并发防御架构与代码质量审计报告 (Architecture Audit)](backed_project/docs/code_review_and_architecture_audit.md)
+* [智能家居 AI 系统端到端隐私合规与数据安全方案](docs/architecture/ai_privacy_compliance_guidelines.md)
+* [端云协同 AI 系统数据地图与验证指导体系](docs/architecture/data_map_and_qa_lineage.md)
 
 ### 4. 数据与模型工程 (Data & Model Ops)
-* [端侧模型深度定制与全链路微调方案 (架构师视角)](model_forge/on_device_model_customization_pipeline.md)
-* [数据评估体系与合成规则逆向推导](model_forge/data_evaluation_and_synthesis_rules.md)
-* [智能家居端侧模型业务扩展与迭代 SOP](model_forge/business_expansion_model_iteration_sop.md)
-* [Mac M4 端侧模型微调与量化复现 SOP](model_forge/mac_m4_reproduction_sop.md)
-* [智能家居端侧模型：数据评估与验收体系指南](model_forge/data_evaluation_and_acceptance_framework.md)
-* [Model Forge 目录说明](model_forge/README.md)
+* [端侧模型深度定制与全链路微调方案 (架构师视角)](model_forge/training/on_device_model_customization_pipeline.md)
+* [数据评估体系与合成规则逆向推导](model_forge/training/data_evaluation_and_synthesis_rules.md)
+* [智能家居端侧模型业务扩展与迭代 SOP](model_forge/training/business_expansion_model_iteration_sop.md)
+* [Mac M4 端侧模型微调与量化复现 SOP](model_forge/training/mac_m4_reproduction_sop.md)
+* [智能家居端侧模型：数据评估与验收体系指南](model_forge/training/data_evaluation_and_acceptance_framework.md)
+* [Model Forge 目录说明](model_forge/training/README.md)
 
 ---
 
@@ -120,7 +120,7 @@ A next-generation Smart Home application demonstrating the **production-ready im
 *   **破局隐私信任危机**：以“本地优先 (Local-First)”打消用户顾虑，精准切入对隐私极度敏感的高端市场。
 *   **构建合规数据飞轮**：依靠“显式授权 (Opt-in) + 端侧脱敏”，合法合规地沉淀高质量垂域日志，持续迭代企业自身的专属行业大模型。
 
-[👉 深入阅读《产品迭代愿景：从“被动控制”到“无感智能”》详细报告](docs/product_vision_ice.md)
+[👉 深入阅读《产品迭代愿景：从“被动控制”到“无感智能”》详细报告](docs/product/product_vision_ice.md)
 
 ---
 
@@ -378,7 +378,7 @@ sequenceDiagram
     end
 ```
 
-详细的 API 契约、管理层决策与 DevOps 部署方案，请参阅 [端云协同架构落地方案](./docs/fastapi_edge_cloud_architecture.md)。
+详细的 API 契约、管理层决策与 DevOps 部署方案，请参阅 [端云协同架构落地方案](docs/architecture/fastapi_edge_cloud_architecture.md)。
 
 ---
 
@@ -485,19 +485,19 @@ To use real on-device inference instead of the mock engine:
 ## 🧩 Monorepo 结构与关键入口 (Project Layout & Key Entry Points)
 
 - UI 入口与演示
-  - [main.dart](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/lib/main.dart)
-  - 设备模型：[device.dart](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/lib/models/device.dart)
-  - 设备服务：[device_service.dart](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/lib/services/device_service.dart)
+  - [main.dart](fronted_project/lib/main.dart)
+  - 设备模型：[device.dart](fronted_project/lib/models/device.dart)
+  - 设备服务：[device_service.dart](fronted_project/lib/services/device_service.dart)
 - 端侧 Agent 内核 (可复用包)
-  - Llama.cpp 引擎入口：[llama_engine.dart](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/packages/on_device_agent/lib/src/engine/llama_cpp/llama_engine.dart)
-  - FFI 绑定声明：[llama_bindings.dart](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/packages/on_device_agent/lib/src/engine/llama_cpp/llama_bindings.dart)
-  - 意图结构体 (JSON Schema 对应)：[agent_intent.dart](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/packages/on_device_agent/lib/src/models/agent_intent.dart)
+  - Llama.cpp 引擎入口：[llama_engine.dart](model_forge/inference/on_device_agent/lib/src/engine/llama_cpp/llama_engine.dart)
+  - FFI 绑定声明：[llama_bindings.dart](model_forge/inference/on_device_agent/lib/src/engine/llama_cpp/llama_bindings.dart)
+  - 意图结构体 (JSON Schema 对应)：[agent_intent.dart](model_forge/inference/on_device_agent/lib/src/models/agent_intent.dart)
 - Model Forge (造模型车间)
-  - 数据合成脚本：[data_synthesis.py](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/model_forge/notebooks/data_synthesis.py)
-  - 训练脚本 (MLX LoRA)：[train.py](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/model_forge/scripts/train.py)
-  - 转换与量化流水线：[quantize.sh](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/model_forge/scripts/quantize.sh)
-  - 一键环境与训练：`make setup`、`make train` 或运行 [run_train.sh](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/model_forge/run_train.sh)
-  - 目录说明与 SOP 索引：[Model Forge README](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/model_forge/README.md)
+  - 数据合成脚本：[data_synthesis.py](model_forge/training/notebooks/data_synthesis.py)
+  - 训练脚本 (MLX LoRA)：[train.py](model_forge/training/scripts/train.py)
+  - 转换与量化流水线：[quantize.sh](model_forge/training/scripts/quantize.sh)
+  - 一键环境与训练：`make setup`、`make train` 或运行 [run_train.sh](model_forge/training/run_train.sh)
+  - 目录说明与 SOP 索引：[Model Forge README](model_forge/training/README.md)
 
 ---
 
@@ -505,23 +505,23 @@ To use real on-device inference instead of the mock engine:
 
 - 评估指标与验收标准
   - 指标体系：FSR ≥ 99.5%，IEM ≥ 95%，OOD-R ≥ 98%，DCR ≥ 99%
-  - 详见：[数据评估与验收体系指南](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/model_forge/data_evaluation_and_acceptance_framework.md)
+  - 详见：[数据评估与验收体系指南](model_forge/training/data_evaluation_and_acceptance_framework.md)
 - 数据合成黄金规则
   - 仅输出纯 JSON、动态设备快照、模糊意图覆盖、负样本边界测试、长尾语言分布
-  - 详见：[数据评估体系与合成规则逆向推导](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/model_forge/data_evaluation_and_synthesis_rules.md)
+  - 详见：[数据评估体系与合成规则逆向推导](model_forge/training/data_evaluation_and_synthesis_rules.md)
 - 端到端复现 (Apple M4)
   - 环境与命令全流程：从 venv、数据合成、QLoRA、GGUF 转换到 Q4_K_M 量化
-  - 详见：[Mac M4 复现 SOP](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/model_forge/mac_m4_reproduction_sop.md)
+  - 详见：[Mac M4 复现 SOP](model_forge/training/mac_m4_reproduction_sop.md)
 - 端侧模型定制方案
   - 架构师视角的全链路方案与团队收益
-  - 详见：[深度定制与全链路微调方案](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/model_forge/on_device_model_customization_pipeline.md)
+  - 详见：[深度定制与全链路微调方案](model_forge/training/on_device_model_customization_pipeline.md)
 
 ---
 
 ## 📦 提交规范与忽略策略 (Commit Policy)
 
 - 仅提交必要源码与配置，忽略大型模型文件、临时产物与平台构建输出
-- 当前忽略规则参考：[.gitignore](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/.gitignore)
+- 当前忽略规则参考：[.gitignore](.gitignore)
 - Model Forge 关键忽略事项
   - 不提交 `exports/**/*.gguf`、`data/**/*.jsonl`、`venv/` 与 `scripts/llama.cpp/`
   - 大文件统一由外链或发布包下发

@@ -50,5 +50,5 @@
 
 1. **寻找任务**：访问 [GitHub Project 看板](https://github.com/aidencck/smart_home_app_on_device_ai/projects)，在 `Todo` 列中寻找带有 `help wanted` 或 `good first issue` 标签的任务。
 2. **认领任务**：在对应的 Issue 下方留言：“Hi, I would like to work on this.”，Maintainer 会将任务 Assign 给你，卡片会自动移入 `In Progress`。
-3. **提交 PR**：Fork 本仓库，在本地新建分支开发。提交 PR 时，请务必使用我们提供的 [Pull Request Template](../.github/PULL_REQUEST_TEMPLATE.md)，并关联你认领的 Issue。
+3. **提交 PR**：Fork 本仓库，在本地新建分支开发。提交 PR 时，请务必使用我们提供的 [Pull Request Template](../../.github/PULL_REQUEST_TEMPLATE.md)，并关联你认领的 Issue。
 4. **Code Review**：等待 Maintainer 审查代码，合并后，享受你的代码运行在下一代智能家居底座上的成就感！

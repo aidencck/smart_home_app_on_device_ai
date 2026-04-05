@@ -83,7 +83,7 @@ flowchart TD
 - **Matter 证书管理**：需实现 Controller/Commissioner 角色，在 iOS 侧调用 `Matter.framework` 颁发 NOC (Node Operational Certificate)。注意 iOS 16+ 对 Matter 局域网权限 (Local Network Privacy) 的强制弹窗拦截处理。
 - **App Intents 架构**：需在 Xcode 中定义 `AppIntents` 结构体，实现 `perform()` 异步方法唤起后台 Flutter Engine 的 Dart 隔离区 (Isolate)，从而触发本地大模型推理，全程不能强依赖云端 API。
 - **与当前端侧架构的融合**：
-  在现存的 [全生命周期 AI 架构](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/docs/full_lifecycle_ai_architecture_solution.md) 中，端侧（如 Llama.cpp 或 MLC LLM）已经具备基于 GGUF 的离线推理能力。App Intents 需要直接桥接到我们现有的意图分类路由，通过 FFI (Foreign Function Interface) 调用 Llama.cpp 引擎，确保 Siri 在无网状态下依然可以驱动我们的“离家安防推演”。
+  在现存的 [全生命周期 AI 架构](full_lifecycle_ai_architecture_solution.md) 中，端侧（如 Llama.cpp 或 MLC LLM）已经具备基于 GGUF 的离线推理能力。App Intents 需要直接桥接到我们现有的意图分类路由，通过 FFI (Foreign Function Interface) 调用 Llama.cpp 引擎，确保 Siri 在无网状态下依然可以驱动我们的“离家安防推演”。
 
 **【业务时序图：Siri App Intents 护城河唤醒链路】**
 通过该链路，我们不仅让 Apple 控制设备，更让 Apple 成为原生“主动智能”的语音入口。
@@ -124,7 +124,7 @@ sequenceDiagram
 - **状态高频同步 (Report State)**：为满足 Google 的 HomeGraph 时效性，我们的 Redis 设备影子需通过 HTTP/2 Server Push 或 gRPC 主动调用 Google 的 HomeGraph API 实时推送状态变更，避免 `QUERY` 接口被 Google 降级限流。
 - **AppFlip 原生桥接**：在 Android 端需配置 Deep Link (App Links) 和 Intent Filter，接收 Google Home 传来的 Client ID 和 Scope，在 Flutter 层拦截并弹出授权 UI，完成后通过 `setResult` 返回授权码。
 - **与当前云端架构的融合**：
-  在现存的 [FastAPI 端云协同架构](file:///Users/aiden/Documents/macinit/smarthome%20APP/smart_home_app/docs/fastapi_edge_cloud_architecture.md) 中，Redis 设备影子已经包含了基于 Vector Clock 防乱序的高速缓存同步机制。Google C2C 的网关必须集成在现有的 FastAPI 体系内，通过现有的 `app.services.device_shadow` 模块查询并更新设备状态，而不能绕过 Vector Clock 机制直接修改数据库，以防止与端侧状态发生读写冲突。
+  在现存的 [FastAPI 端云协同架构](fastapi_edge_cloud_architecture.md) 中，Redis 设备影子已经包含了基于 Vector Clock 防乱序的高速缓存同步机制。Google C2C 的网关必须集成在现有的 FastAPI 体系内，通过现有的 `app.services.device_shadow` 模块查询并更新设备状态，而不能绕过 Vector Clock 机制直接修改数据库，以防止与端侧状态发生读写冲突。
 
 **【业务时序图：Google AppFlip (App-to-App) 无缝授权与 C2C 控制】**
 解决传统输入账密带来的高流失率，实现“一键绑定，云端互联”。
