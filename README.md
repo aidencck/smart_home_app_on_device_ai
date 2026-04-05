@@ -128,6 +128,56 @@ A next-generation Smart Home application demonstrating the **production-ready im
 
 ---
 
+## 🚀 管理后台演进路线：AI 调度中心与进化工厂 (AI Ops Center)
+
+在“端侧优先、云端兜底”的架构下，传统的“设备增删改查”管理后台必须向 **AI 云原生架构 (AI Cloud-Native)** 转型。管理后台的定位将演进为整个系统的**“AI 调度中心与进化工厂”**。
+
+### 📍 Phase 1: 基础设施增强与 AI 观测底座 (0-3 Months)
+**目标**：打破端云黑盒，建立对 AI 成本、延迟和并发冲突的可视化。
+*   **AI 流量与成本看板 (AI Telemetry)**
+    *   监控大模型请求的端侧拦截率（目标 >80%），统计云端 vLLM 兜底带来的 Token 成本消耗。
+    *   监控 Semantic Cache（语义缓存）的命中率及 TTFT（首字延迟）大盘数据。
+*   **端侧设备健康度预警**
+    *   监控不同型号手机/中控屏运行大模型时的 RAM 峰值（防 OOM 崩溃）及 NPU 负载。
+*   **设备影子状态对账 (Shadow & Vector Clock)**
+    *   针对高并发弱网环境，提供设备云端状态与本地时钟（Vector Clock）的可视化校验工具，排查“幽灵跳动”等并发冲突。
+
+### 📍 Phase 2: 数据飞轮与模型生命周期 (3-9 Months)
+**目标**：构建业务自增长闭环，让大模型“越用越聪明”。
+*   **自动化评测与坏案例清洗 (LLM-as-a-Judge)**
+    *   接收端侧脱敏上报的失败日志（Bad Cases）。
+    *   在后台引入大模型作为“裁判”，自动剔除噪音，提取高质量的 JSONL 负样本。
+*   **微调工厂与 LoRA 管理 (Model Forge Ops)**
+    *   一键将清洗后的数据推送至微调管线。
+    *   管理针对特定场景（如制冰机专属、复杂语境）训练出的 LoRA 适配器权重。
+*   **“千机千面”的 OTA 下发策略**
+    *   基于设备的算力画像（内存大小、芯片代际），动态下发不同量级（0.5B/1.5B/2B）的 GGUF 模型。
+
+### 📍 Phase 3: 生态破壁与协议中台 (9-18 Months)
+**目标**：成为家庭物理世界的统一中枢，支撑跨品牌协同。
+*   **南向物模型适配器 (Southbound Integration)**
+    *   提供拖拽式映射界面，将第三方生态（如 Tuya、AWS IoT）的专有属性平滑映射至内部标准物模型（TSL）。
+*   **Matter 生态管理中心**
+    *   管理 Matter 设备的证书（DAC/NOC）分发。
+    *   提供局域网边缘网关（Home Hub）的拓扑结构监控与远程热重启能力。
+*   **动态安全护栏配置 (Dynamic Guardrails)**
+    *   动态更新 GBNF 语法树模板，严防大模型产生幻觉去控制未授权的高危设备（如门锁）。
+
+### 📍 Phase 4: 无感智能与商业化变现 (18+ Months)
+**目标**：支撑终极愿景，管理多模态交互资产与 SaaS 订阅服务。
+*   **全域感知与预判引擎管理 (Proactive Intelligence)**
+    *   管理基于用户起居习惯生成的“预测模型”。
+    *   配置仲裁规则：当 AI 的主动预判操作与用户的物理按键发生冲突时，如何优雅降级。
+*   **多模态感官资产库 (Sensory Asset Ops)**
+    *   统一管理 Flutter Impeller 所需的 3D 物理映射素材、Shader 动画脚本。
+    *   管理设备专属的 ASMR 交互音效及 CoreHaptics 线性马达震动配置文件。
+*   **SaaS 订阅与权限网关**
+    *   支撑商业化转型：基础语音控制免费，基于历史习惯的“全自动预判 AI 管家”作为高级订阅增值服务进行权限鉴权。
+
+> **💡 产品战略重心**：目前的后端架构已打好极佳的底子（FastAPI + Redis Lua 防并发 + DDD 设计），接下来的重心应该放在 **Phase 2（数据飞轮）**。只要后台能把“收集端侧报错 -> 自动清洗 -> 微调出新模型 -> OTA 静默下发”这个飞轮转起来，产品就建立起了真正的护城河，从而彻底脱离单纯卖硬件的红海价格战。
+
+---
+
 ## 🌟 技术底座：支撑主动智能的核心落地能力 (Tech Enablers)
 
 大模型直接控制物理世界的硬件，面临着**延迟**、**隐私**、**幻觉**以及**并发竞态**等重重阻碍。本项目通过构建强大的“端云协同 (Edge-Cloud Synergy)”底座，通过以下六大架构创新，完美解决了这些工业级落地痛点：
@@ -541,9 +591,47 @@ graph TD
 
 ## 🧪 数据与模型：评估、复现与迭代 (Data & Model Ops)
 
-- 评估指标与验收标准
-  - 指标体系：FSR ≥ 99.5%，IEM ≥ 95%，OOD-R ≥ 98%，DCR ≥ 99%
-  - 详见：[数据评估与验收体系指南](model_forge/training/data_evaluation_and_acceptance_framework.md)
+本项目建立了一套覆盖**“数据准备 -> 模型微调 -> 工程推理 -> 商业变现”**的完整四级核心指标体系，它是整个端侧 AI 架构演进的“北极星”。
+
+### 端侧 AI 全生命周期核心指标体系
+
+#### 阶段一：数据质量与训练指标 (Data & Training)
+本阶段决定了模型“吃进去的粮”和“消化能力”，是整个数据飞轮的起点。
+- **Data Purity (数据纯净度)**：100%（进入训练集前，必须通过 Judge 清洗，彻底剥离所有个人身份信息 PII）。
+- **Data Synthesis Yield (数据合成有效率)**：≥ 90%（合成数据能通过云端 LLM-as-a-Judge 验证并入库的比例）。
+- **Benchmark Coverage (测试集维度覆盖率)**：直接指令 40%、模糊推理 30%、越界负样本 20%、上下文陷阱 10%。
+- **Loss Convergence (收敛稳定性)**：要求 QLoRA 训练过程中的 Loss 曲线平滑下降，且验证集 Loss 无回弹，防止过拟合。
+
+#### 阶段二：模型能力验收指标 (Model Acceptance KPIs)
+这是模型能否从 Model Forge 车间毕业的硬性标准。
+- **FSR (Format Strictness Rate / 刚性解析率)**：≥ 99.5%（模型输出必须能被无错解析，绝不包含解释性废话）。
+- **IEM (Intent Exact Match / 意图精确匹配率)**：≥ 95.0%（解析后的 device_id 和 action 与 Ground Truth 完全一致）。
+- **OOD-R (Out-of-Domain Rejection / 越界拦截率)**：≥ 98.0%（面对非智能家居指令，必须稳定输出拒绝控制的意图）。
+- **DCR (Dynamic Context Resilience / 抗干扰率)**：≥ 99.0%（出现不存在的同名设备时，模型不产生幻觉调用）。
+
+#### 阶段三：工程与推理性能指标 (Engineering & Inference)
+决定了用户在使用时的“体感流畅度”和手机的“健康度”，是端侧部署的红线。
+- **TTFT (Time To First Token / 首字延迟)**：≤ 300ms（从点击发送到 UI 渲染出首个状态变化的时间）。
+- **End-to-End Latency (端到端控制延迟)**：≤ 800ms（涵盖语音转写、网关分发、模型推理、局域网设备执行全链路）。
+- **Throughput (生成吞吐量)**：≥ 15 Tokens/s（在主流移动端芯片上的生成速度）。
+- **RAM Peak (推理峰值内存)**：≤ 1.5GB（确保 3GB/4GB 内存机型上 0 OOM 崩溃率）。
+- **Model Size (模型分发体积)**：≤ 500MB（极致压缩体积以降低用户下载成本）。
+- **GBNF Format Hit (端侧语法树命中)**：100%（结合动态 GBNF 语法树注入，实际推理中强行阻断非法 JSON）。
+
+#### 阶段四：商业与业务价值指标 (Business & ROI)
+验证端出 AI 架构重构是否真正为企业带来了降本增效的护城河。
+- **Edge Routing Ratio (端侧拦截率)**：≥ 80%（在本地闭环处理，未向云端发起大模型请求的指令占比）。
+- **Cloud Token Cost Reduction (云端 Token 降本率)**：相比纯云端方案，通过本地拦截和缓存节省的 API 账单费用估算。
+- **User Opt-in Rate (隐私授权转化率)**：用户开启“体验改善计划”以提供脱敏 Bad Case 的比例。
+- **First AI Interaction Conversion (首次 AI 交互转化率)**：接入首个设备后，24 小时内完成首次 AI 控制的比例。
+
+---
+
+**文档更新情况 (Code References)**：
+- [全链路数据与部署架构解决方案](docs/architecture/full_lifecycle_ai_architecture_solution.md) 重构了第 6 节，将其升级为全局“北极星”文档。
+- [数据评估与验收体系指南](model_forge/training/data_evaluation_and_acceptance_framework.md) 补充了架构说明，明确定位为全生命周期中阶段二的执行标准。
+- [业务扩展与迭代 SOP](model_forge/training/business_expansion_model_iteration_sop.md) 更新了工程交接 SOP，严格对齐了新梳理的 RAM Peak、Throughput 及 TTFT 等红线参数。
+
 - 数据合成黄金规则
   - 仅输出纯 JSON、动态设备快照、模糊意图覆盖、负样本边界测试、长尾语言分布
   - 详见：[数据评估体系与合成规则逆向推导](model_forge/training/data_evaluation_and_synthesis_rules.md)
