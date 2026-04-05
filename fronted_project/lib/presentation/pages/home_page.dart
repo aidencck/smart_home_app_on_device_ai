@@ -21,41 +21,38 @@ class _HomePageState extends ConsumerState<HomePage> {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: colorScheme.surface,
-      body: CustomScrollView(
-        slivers: [
-          // 1. 顶部导航区 (Top Navigation)
-          _buildTopNavigation(context, colorScheme),
+    return CustomScrollView(
+      slivers: [
+        // 1. 顶部导航区 (Top Navigation)
+        _buildTopNavigation(context, colorScheme),
 
-          SliverPadding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            sliver: SliverList(
-              delegate: SliverChildListDelegate([
-                const SizedBox(height: 16),
-                // 2. 当前状态区 (Current State)
-                _buildCurrentState(theme, colorScheme),
-                const SizedBox(height: 24),
-                // 3. 快捷控制区 (Quick Control)
-                _buildQuickControl(theme, colorScheme),
-                const SizedBox(height: 24),
-                // 4. 常用场景区 (Common Scenes)
-                _buildCommonScenes(theme, colorScheme),
-                const SizedBox(height: 24),
-                // 5. AI 推荐区 (AI Recommendations)
-                _buildAiRecommendations(theme, colorScheme),
-                const SizedBox(height: 24),
-                // 6. 自动化状态区 (Automation State)
-                _buildAutomationState(theme, colorScheme),
-                const SizedBox(height: 24),
-                // 7. 设备摘要区 (Device Summary)
-                _buildDeviceSummary(theme, colorScheme),
-                const SizedBox(height: 48), // Bottom padding
-              ]),
-            ),
+        SliverPadding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          sliver: SliverList(
+            delegate: SliverChildListDelegate([
+              const SizedBox(height: 16),
+              // 2. 当前状态区 (Current State)
+              _buildCurrentState(theme, colorScheme),
+              const SizedBox(height: 24),
+              // 3. 快捷控制区 (Quick Control)
+              _buildQuickControl(theme, colorScheme),
+              const SizedBox(height: 24),
+              // 4. 常用场景区 (Common Scenes)
+              _buildCommonScenes(theme, colorScheme),
+              const SizedBox(height: 24),
+              // 5. AI 推荐区 (AI Recommendations)
+              _buildAiRecommendations(theme, colorScheme),
+              const SizedBox(height: 24),
+              // 6. 自动化状态区 (Automation State)
+              _buildAutomationState(theme, colorScheme),
+              const SizedBox(height: 24),
+              // 7. 设备摘要区 (Device Summary)
+              _buildDeviceSummary(theme, colorScheme),
+              const SizedBox(height: 48), // Bottom padding
+            ]),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../features/home/home_provider.dart';
+import '../pages/home_page.dart'; // 引入真实的漂亮 UI 页面
 
 class HomeScreen extends ConsumerWidget {
-  const HomeScreen({Key? key}) : super(key: key);
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -11,19 +12,6 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F7),
-      appBar: AppBar(
-        title: const Text('Luma AI', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh, color: Colors.black87),
-            onPressed: () {
-              ref.invalidate(homeSummaryProvider);
-            },
-          )
-        ],
-      ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(homeSummaryProvider);
@@ -32,7 +20,7 @@ class HomeScreen extends ConsumerWidget {
           } catch (_) {}
         },
         child: homeSummaryAsync.when(
-          data: (data) => _HomeContent(data: data),
+          data: (data) => const HomePage(), // 加载成功后显示漂亮的 UI
           loading: () => const _HomeSkeleton(),
           error: (error, stackTrace) => ListView(
             children: [
@@ -147,33 +135,6 @@ class _HomeSkeleton extends StatelessWidget {
         const SizedBox(height: 12),
         const _SkeletonBox(height: 80, width: double.infinity, borderRadius: 16),
         const SizedBox(height: 40), // 底部留白
-      ],
-    );
-  }
-}
-
-class _HomeContent extends StatelessWidget {
-  final Map<String, dynamic> data;
-
-  const _HomeContent({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      children: [
-        SizedBox(height: MediaQuery.of(context).size.height * 0.3),
-        Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32.0),
-            child: Text(
-              '真实环境概览及设备控制内容区域\n\n获取到的数据:\n${data.toString()}',
-              textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 16, color: Colors.black54),
-            ),
-          ),
-        ),
       ],
     );
   }
