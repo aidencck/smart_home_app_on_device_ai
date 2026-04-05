@@ -13,7 +13,7 @@ import asyncio
 from app.tasks.offline_worker import start_offline_worker
 
 # AI Backend Routers
-from app.api.v1.routers import ai, ota, data, devices, home
+from app.api.v1.routers import ai, ota, data, devices, home, automations
 
 # Placeholder for IoT Core Backend Routers (app/api/v1/endpoints/...)
 try:
@@ -77,6 +77,7 @@ service_role = os.getenv("SERVICE_ROLE", "all").lower()
 
 if service_role in ["all", "ai_gateway"]:
     app.include_router(ai.router, prefix=f"{settings.API_V1_STR}/ai", tags=["AI Routing"])
+    app.include_router(automations.router, prefix=f"{settings.API_V1_STR}/automations", tags=["Automations"])
 
 if service_role in ["all", "device_shadow"]:
     app.include_router(devices.router, prefix=f"{settings.API_V1_STR}/devices", tags=["Device Shadow"])
