@@ -62,6 +62,7 @@ A next-generation Smart Home application demonstrating the **production-ready im
 ### 1. 核心产品与战略 (Business & Strategy)
 * [🌌 产品迭代愿景：从“被动控制”到“无感智能” (Zero-UI Platform)](docs/product/product_vision_ice.md)
 * [开源协同与敏捷项目管理指南](docs/product/agile_project_management.md)
+* [🔗 **[New]** 用户操作与配网手册 (End-User Manual)](docs/user_manual/end_user_manual.md)
 
 ### 2. 架构设计与技术落地 (Architecture & Engineering)
 * [智能家居端侧 AI Agent 架构复盘与落地能力指南](docs/architecture/honest_architecture_reflection.md)
@@ -79,6 +80,9 @@ A next-generation Smart Home application demonstrating the **production-ready im
 * [架构演进路线与遗留任务清单 (Architecture Roadmap)](backed_project/docs/architecture_roadmap.md)
 
 ### 3. 规范、运维与审计 (Standards, DevOps & Audit)
+* [🔗 **[New]** 全局 API 接口字典 (Full API Reference)](docs/api/api_reference.md)
+* [🔗 **[New]** 自动化测试与质量保障指南 (Testing & QA Docs)](docs/testing/testing_and_qa_guide.md)
+* [🔗 **[New]** 故障排查矩阵与 FAQ (Troubleshooting & FAQ)](docs/troubleshooting/faq_and_troubleshooting.md)
 * [🔗 **[New]** 后端 API 规范与全局异常处理标准 (API Standards)](backed_project/docs/api_standards.md)
 * [🔗 **[New]** Docker 容器化与开发环境配置指南 (Docker Guide)](backed_project/docs/docker_development_guide.md)
 * [🔗 **[New]** 后端并发防御架构与代码质量审计报告 (Architecture Audit)](backed_project/docs/code_review_and_architecture_audit.md)
