@@ -1,11 +1,11 @@
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Dict, Any
 from app.schemas.base import BaseSchema
 
 class DeviceShadowUpdate(BaseSchema):
     """单个端侧上报的设备影子更新"""
     device_id: str = Field(..., description="设备唯一标识")
-    state: str = Field(..., description="更新后的状态")
+    state: Dict[str, Any] = Field(..., description="更新后的状态")
     last_update_ts: int = Field(..., description="端侧产生的操作时间戳 (Vector Clock)")
     is_high_risk: bool = Field(default=False, description="是否为高危设备 (如门锁、烤箱)")
 
@@ -30,7 +30,7 @@ class Device(DeviceBase):
         orm_mode = True
 
 class DeviceStateUpdate(BaseModel):
-    state: str = Field(..., description="要更新的设备状态")
+    state: Dict[str, Any] = Field(..., description="要更新的设备状态")
     vector_clock: int = Field(..., description="当前持有的 vector_clock 值，用于并发冲突控制")
     is_verified: bool = Field(default=False, description="Secondary confirmation flag for high-risk devices")
 

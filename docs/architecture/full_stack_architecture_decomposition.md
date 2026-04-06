@@ -1,10 +1,10 @@
 # 智能家居全链路架构深度拆解：端云协同、IoT 通信与生态集成
 
-> **Document Status**: Architectural Blueprint | **Role**: Chief Architect / CTO / Product VP | **Date**: 2026-04-01
+> **Document Status**: Architectural Blueprint | **Role**: Chief Architect / CTO / Product Lead | **Date**: 2026-04-01
 
 ## 1. CTO 视角的系统性评审：第一性原理分析 (Systematic Review: First Principles)
 
-作为技术总监/CTO，在审视这份横跨“端云协同”、“IoT 通信”和“全球生态集成”的全链路架构时，不能仅停留在技术组件的堆砌上。我们必须回到**第一性原理思维**，明确这个系统的**前提 (Premise)**、**约束 (Constraints)**、**边界 (Boundaries)** 和 **终局 (Endgame)**。只有这些宏观定义与产品/商业价值达成平衡，底层的技术拆解才有意义。
+作为CTO，在审视这份横跨“端云协同”、“IoT 通信”和“全球生态集成”的全链路架构时，不能仅停留在技术组件的堆砌上。我们必须回到**第一性原理思维**，明确这个系统的**前提 (Premise)**、**约束 (Constraints)**、**边界 (Boundaries)** 和 **终局 (Endgame)**。只有这些宏观定义与产品/商业价值达成平衡，底层的技术拆解才有意义。
 
 ### 1.1 架构前提 (Premise)
 - **商业前提**：纯云端 AI 的 API 账单会拖垮硬件利润率，且“全天候隐私上云”是阻碍高端用户买单的致命伤。

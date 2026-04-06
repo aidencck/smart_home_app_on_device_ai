@@ -1,7 +1,7 @@
 # Smart Home App - 敏捷项目管理需求池 (Product Backlog)
 
 > **文档状态**: 活跃 (Active)
-> **视角**: 产品总监 (Product Director)
+> **视角**: 产品负责人 (Product Lead)
 > **目标**: 将《从“被动控制”到“无感智能”》的产品愿景以及技术架构战略转化为可落地的史诗 (Epics) 和用户故事 (User Stories)，以便导入远程项目管理工具 (GitHub/Jira/GitLab)。
 
 ---

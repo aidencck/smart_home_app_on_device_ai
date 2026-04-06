@@ -53,19 +53,14 @@ class DeviceService:
             ttl = 1 if update_data.is_high_risk else 3600
             
             # 补充：日出模式需要 15 分钟 (900秒) 的过渡时间逻辑
-            # 解析 state 检查是否包含 sunrise
             import json
-            state_str = update_data.state
-            try:
-                state_dict = json.loads(state_str)
-                # 检查是否包含日出唤醒逻辑
-                if state_dict.get("shader_engine") == "sunrise" or "sunrise" in state_str.lower():
-                    state_dict["transition_duration"] = 900  # 注入 15 分钟过渡期
-                    state_str = json.dumps(state_dict)
-            except json.JSONDecodeError:
-                # 若不是标准 JSON，则退化为简单字符串匹配
-                if "sunrise" in state_str.lower():
-                    pass # 非 JSON 格式仅作备用兼容
+            state_dict = update_data.state.copy()
+            state_str_check = json.dumps(state_dict).lower()
+            
+            if state_dict.get("shader_engine") == "sunrise" or "sunrise" in state_str_check:
+                state_dict["transition_duration"] = 900  # 注入 15 分钟过渡期
+                
+            state_str = json.dumps(state_dict)
 
             # 在 Pipeline 中注册 Lua 脚本执行
             pipeline.eval(
@@ -185,7 +180,7 @@ class DeviceService:
         # I-2: Deep Sleep Hard Lock for Bed Angle (生理特征强制熔断)
         # 智能床设备在检测到用户处于深睡时，必须阻止更改角度，防止惊醒，除非有显式的二次验证
         if device.product_id and "bed" in device.product_id.lower() or device.name and "bed" in device.name.lower():
-            if "angle" in state_update.state.lower():
+            if "angle" in state_update.state:
                 if device.state and "deep_sleep" in device.state.lower():
                     if not state_update.is_verified:
                         raise AppException(
@@ -200,8 +195,14 @@ class DeviceService:
                 message=f"Device state conflict. Current vector_clock is {device.vector_clock}, but got {state_update.vector_clock}"
             )
             
+        # 模拟检查是否有冲突的自动化在运行并记录 Override_Log
+        mock_automation_conflict = True  # MVP 阶段模拟条件
+        if mock_automation_conflict:
+            logger.info(f"Mocking Override_Log insertion: State update for device {device_id} contradicts running automation.")
+            
         new_clock = device.vector_clock + 1
         # 3. 更新状态和 vector_clock
+        import json
         stmt = (
             update(Device)
             .where(
@@ -209,7 +210,7 @@ class DeviceService:
                 Device.vector_clock == state_update.vector_clock
             )
             .values(
-                state=state_update.state,
+                state=json.dumps(state_update.state),
                 vector_clock=new_clock,
                 updated_at=datetime.now(timezone.utc)
             )

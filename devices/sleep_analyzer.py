@@ -50,9 +50,9 @@ class SleepAnalyzer:
     def trigger_automation(self, new_stage):
         """状态改变时触发自动化 webhook，使用防阻塞超时机制"""
         payload = {
-            "event_type": new_stage.name,
-            "payload": {
-                "device_id": self.device_id
+            "device_id": self.device_id,
+            "computed_state": {
+                "sleep_stage": new_stage.name
             }
         }
         

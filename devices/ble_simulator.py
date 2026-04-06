@@ -25,7 +25,11 @@ DEVICES = [
         "characteristics": {
             "occupancy": False,
             "temperature": 24.5,
-            "head_elevation": 15
+            "angle": 15,
+            "vibration": 0,
+            "support_level": "medium",
+            "temp_mode": "auto",
+            "vector_clock": 0
         }
     },
     {
@@ -43,6 +47,9 @@ DEVICES = [
 async def simulate_broadcast(device):
     """Simulates the BLE broadcasting of a device."""
     while True:
+        if "vector_clock" in device["characteristics"]:
+            device["characteristics"]["vector_clock"] += 1
+            
         payload = json.dumps(device["characteristics"])
         logger.info(f"Broadcasting from {device['name']} ({device['mac_address']}) - UUID: {device['service_uuid']} - Data: {payload}")
         # Simulate broadcast interval

@@ -19,6 +19,11 @@
 			<key>isShown</key>
 			<false/>
 		</dict>
+		<key>flutter_blue_plus_darwin.xcscheme</key>
+		<dict>
+			<key>isShown</key>
+			<false/>
+		</dict>
 		<key>isar_flutter_libs.xcscheme</key>
 		<dict>
 			<key>isShown</key>

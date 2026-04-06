@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { HeartPulse, BedDouble, Tv, Thermometer, Waves, Volume2, Sun, Moon, MoonStar, VolumeX, Layers, Lightbulb } from 'lucide-react';
+import { HeartPulse, BedDouble, Tv, Thermometer, Waves, Volume2, Sun, MoonStar, VolumeX, Layers, Lightbulb } from 'lucide-react';
 
 // --- Types & Data ---
 
@@ -36,29 +36,144 @@ const PHASES = [
   { id: 3, name: '顺应节律的无感唤醒', desc: '浅睡期检测，日出光晕与触觉轻柔唤醒' },
 ];
 
-const PHASE_STATES: Record<Phase, DeviceState> = {
-  1: {
-    ring: { hr: 68, stage: '浅睡眠 (入睡期)', hrv: '45ms (正常)', spo2: 98, temp: 36.6, respiration: 16, movement: '轻微调整姿势' },
-    bed: { angle: 15, vibration: '轻微背部舒缓', temp: '智能恒温 (26°C)', support_level: '柔软包裹 (释压)' },
-    tv: { visual: '篝火/雨滴 Shader', audio: 'ASMR 白噪音', brightness: 40, ambient_light: '暖橘色呼吸 (同步心率)' },
-  },
-  2: {
-    ring: { hr: 52, stage: '深睡眠期', hrv: '65ms (平稳上升)', spo2: 99, temp: 36.2, respiration: 12, movement: '极少 (深度沉浸)' },
-    bed: { angle: 0, vibration: '关闭', temp: '动态微调 (防冷/热醒)', support_level: '脊椎强支撑 (深睡护腰)' },
-    tv: { visual: '全黑息屏', audio: '静音', brightness: 0, ambient_light: '完全关闭' },
-  },
-  3: {
-    ring: { hr: 62, stage: '浅睡眠 (易唤醒)', hrv: '50ms (唤醒准备)', spo2: 98, temp: 36.5, respiration: 15, movement: '逐渐活跃' },
-    bed: { angle: 10, vibration: '脉冲式线性马达', temp: '恒定 (26°C)', support_level: '舒缓支撑 (准备唤醒)' },
-    tv: { visual: '日出渐变光晕', audio: '自然晨音', brightness: 70, ambient_light: '晨曦渐变 (模拟日出)' },
-  },
+const MOCK_INITIAL_DATA = {
+  sleep_stage: 'LIGHT_SLEEP',
+  devices: {
+    bed: {
+      id: 'bed_1',
+      vector_clock: 1,
+      state: {
+        angle: 15,
+        vibration: '轻微背部舒缓',
+        temp: '智能恒温 (26°C)',
+        support_level: '柔软包裹 (释压)'
+      }
+    },
+    ring: {
+      id: 'ring_1',
+      vector_clock: 1,
+      state: { hr: 68, stage: '浅睡眠 (入睡期)', hrv: '45ms (正常)', spo2: 98, temp: 36.6, respiration: 16, movement: '轻微调整姿势' }
+    },
+    tv: {
+      id: 'tv_1',
+      vector_clock: 1,
+      state: { visual: '篝火/雨滴 Shader', audio: 'ASMR 白噪音', brightness: 40, ambient_light: '暖橘色呼吸 (同步心率)' }
+    }
+  }
+};
+
+const getPhaseFromStage = (stage: string): Phase => {
+  if (stage === 'DEEP_SLEEP') return 2;
+  if (stage === 'AWAKE') return 3;
+  return 1;
 };
 
 // --- Components ---
 
 export default function App() {
-  const [phase, setPhase] = useState<Phase>(1);
-  const state = PHASE_STATES[phase];
+  const [homeData, setHomeData] = useState(MOCK_INITIAL_DATA);
+  const [loading, setLoading] = useState(true);
+
+  const fetchHomeSummary = useCallback(async () => {
+    try {
+      const res = await fetch('http://localhost:8000/v1/home/summary');
+      if (res.ok) {
+        const data = await res.json();
+        setHomeData(data);
+      } else {
+        throw new Error('Server returned ' + res.status);
+      }
+    } catch (err) {
+      console.warn("Using mock data, failed to fetch real state:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchHomeSummary();
+    // Optional: poll every 5s for real-time updates
+    const interval = setInterval(fetchHomeSummary, 5000);
+    return () => clearInterval(interval);
+  }, [fetchHomeSummary]);
+
+  const handleBedAngleChange = async (newAngle: number) => {
+    const bedId = homeData.devices.bed.id;
+    const currentClock = homeData.devices.bed.vector_clock;
+    
+    try {
+      const res = await fetch(`http://localhost:8000/v1/devices/${bedId}/state`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          state: { angle: newAngle }, 
+          vector_clock: currentClock 
+        }),
+      });
+
+      if (res.status === 409) {
+        alert("Conflict detected (409): 设备状态已被其他终端修改。正在同步最新状态...");
+        fetchHomeSummary(); // Revert
+      } else if (res.ok) {
+        fetchHomeSummary(); // Update clock and state
+      } else {
+        throw new Error("Failed to update");
+      }
+    } catch (err) {
+      console.error("Update failed", err);
+      // alert("请求失败，请检查网络或后端服务状态。");
+      // 模拟更新成功
+      setHomeData(prev => ({
+        ...prev,
+        devices: {
+          ...prev.devices,
+          bed: {
+            ...prev.devices.bed,
+            vector_clock: prev.devices.bed.vector_clock + 1,
+            state: { ...prev.devices.bed.state, angle: newAngle }
+          }
+        }
+      }));
+    }
+  };
+
+  const setSimulatedPhase = (phaseId: number) => {
+    const stageMap: Record<number, string> = {
+      1: 'LIGHT_SLEEP',
+      2: 'DEEP_SLEEP',
+      3: 'AWAKE'
+    };
+    
+    setHomeData(prev => ({
+      ...prev,
+      sleep_stage: stageMap[phaseId],
+      devices: {
+        ...prev.devices,
+        bed: {
+          ...prev.devices.bed,
+          state: { 
+            ...prev.devices.bed.state, 
+            angle: phaseId === 2 ? 0 : phaseId === 1 ? 15 : 10 
+          }
+        },
+        tv: {
+          ...prev.devices.tv,
+          state: {
+            ...prev.devices.tv.state,
+            visual: phaseId === 2 ? '全黑息屏' : phaseId === 1 ? '篝火/雨滴 Shader' : '日出渐变光晕',
+            brightness: phaseId === 2 ? 0 : phaseId === 1 ? 40 : 70
+          }
+        }
+      }
+    }));
+  };
+
+  const phase = getPhaseFromStage(homeData.sleep_stage);
+  const state = {
+    ring: homeData.devices.ring.state,
+    bed: homeData.devices.bed.state,
+    tv: homeData.devices.tv.state,
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-200 font-sans selection:bg-indigo-500/30 flex flex-col overflow-y-auto">
@@ -77,7 +192,7 @@ export default function App() {
             {PHASES.map((p) => (
               <button
                 key={p.id}
-                onClick={() => setPhase(p.id as Phase)}
+                onClick={() => setSimulatedPhase(p.id)}
                 className={`flex-1 relative p-4 rounded-xl text-left transition-all duration-300 ${
                   phase === p.id 
                     ? 'bg-indigo-600/20 border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.15)]' 
@@ -329,15 +444,50 @@ export default function App() {
               <h2 className="text-base font-medium text-white">智能床 (执行终端)</h2>
             </div>
             <div className="flex-1 flex flex-col justify-center gap-4">
-              <div className="bg-slate-800/40 rounded-xl p-4 flex items-center justify-between">
-                <div>
-                  <div className="text-xs text-slate-500 mb-1">床头仰角</div>
-                  <div className="text-sm font-medium text-slate-200">{state.bed.angle}°</div>
+              
+              {/* 可交互的床头仰角滑块 */}
+              <div className="bg-slate-800/40 rounded-xl p-4 flex flex-col gap-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-xs text-slate-500 mb-1">床头仰角控制</div>
+                    <div className="text-sm font-medium text-slate-200">{state.bed.angle}°</div>
+                  </div>
+                  <div className="text-xs font-mono text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded">
+                    {state.bed.angle === 15 ? '零重力/阅读' : state.bed.angle === 0 ? '平躺深睡' : '自定义'}
+                  </div>
                 </div>
-                <div className="text-xs font-mono text-cyan-400 bg-cyan-500/10 px-2 py-1 rounded">
-                  {state.bed.angle === 15 ? '零重力/阅读' : state.bed.angle === 0 ? '平躺深睡' : '唤醒姿态'}
-                </div>
+                <input
+                  type="range"
+                  min="0"
+                  max="60"
+                  value={state.bed.angle}
+                  disabled={homeData.sleep_stage === 'DEEP_SLEEP'}
+                  onChange={(e) => {
+                    const newAngle = Number(e.target.value);
+                    setHomeData(prev => ({
+                      ...prev,
+                      devices: {
+                        ...prev.devices,
+                        bed: {
+                          ...prev.devices.bed,
+                          state: { ...prev.devices.bed.state, angle: newAngle }
+                        }
+                      }
+                    }));
+                  }}
+                  onMouseUp={(e) => handleBedAngleChange(Number((e.target as HTMLInputElement).value))}
+                  onTouchEnd={(e) => handleBedAngleChange(Number((e.target as HTMLInputElement).value))}
+                  className={`w-full h-2 rounded-lg appearance-none cursor-pointer ${
+                    homeData.sleep_stage === 'DEEP_SLEEP' ? 'bg-slate-700' : 'bg-cyan-900/50 accent-cyan-400'
+                  }`}
+                />
+                {homeData.sleep_stage === 'DEEP_SLEEP' && (
+                  <div className="text-[10px] text-rose-400 text-right">
+                    深睡期间已锁定，不可调节
+                  </div>
+                )}
               </div>
+
               <div className="bg-slate-800/40 rounded-xl p-4 flex items-center gap-4">
                 <Waves className="text-indigo-400" size={18} />
                 <div>

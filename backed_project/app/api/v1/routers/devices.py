@@ -38,7 +38,7 @@ async def update_device_shadow_batch(
         await DeviceService.update_shadow_batch(redis, batch_data)
         
         # 记录批量更新指标
-        for shadow in batch_data.shadows:
+        for shadow in batch_data.updates:
             DEVICE_CONTROL_COUNT.labels(device_id=shadow.device_id, operation_type='shadow_batch_update').inc()
             
         return BaseResponse.success(message="Shadow batch updated successfully")
@@ -47,7 +47,7 @@ async def update_device_shadow_batch(
         from app.core.logger import logger
         
         # 记录批量更新错误指标
-        for shadow in batch_data.shadows:
+        for shadow in batch_data.updates:
             DEVICE_CONTROL_ERROR.labels(device_id=shadow.device_id, error_type=type(e).__name__).inc()
             
         if isinstance(e, AppException):
