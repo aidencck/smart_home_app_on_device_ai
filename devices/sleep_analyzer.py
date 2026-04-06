@@ -101,6 +101,11 @@ class SleepAnalyzer:
                 
         except KeyboardInterrupt:
             logging.info("收到中断信号，睡眠分析器已停止运行。")
+        finally:
+            # 安全合规：运行结束或异常退出时，显式销毁内存中的敏感生理数据与凭证
+            self.data_window.clear()
+            self.token = ""
+            logging.info("内存中的生理数据与授权凭证已安全销毁，保障数据隐私。")
 
 if __name__ == "__main__":
     analyzer = SleepAnalyzer()

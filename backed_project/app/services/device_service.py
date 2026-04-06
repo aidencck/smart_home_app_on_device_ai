@@ -52,13 +52,28 @@ class DeviceService:
             redis_key = f"device:shadow:{update_data.device_id}"
             ttl = 1 if update_data.is_high_risk else 3600
             
+            # 补充：日出模式需要 15 分钟 (900秒) 的过渡时间逻辑
+            # 解析 state 检查是否包含 sunrise
+            import json
+            state_str = update_data.state
+            try:
+                state_dict = json.loads(state_str)
+                # 检查是否包含日出唤醒逻辑
+                if state_dict.get("shader_engine") == "sunrise" or "sunrise" in state_str.lower():
+                    state_dict["transition_duration"] = 900  # 注入 15 分钟过渡期
+                    state_str = json.dumps(state_dict)
+            except json.JSONDecodeError:
+                # 若不是标准 JSON，则退化为简单字符串匹配
+                if "sunrise" in state_str.lower():
+                    pass # 非 JSON 格式仅作备用兼容
+
             # 在 Pipeline 中注册 Lua 脚本执行
             pipeline.eval(
                 DeviceService.LUA_UPDATE_SHADOW, 
                 1, # KEY 数量
                 redis_key, # KEYS[1]
                 update_data.last_update_ts, # ARGV[1]
-                update_data.state,          # ARGV[2]
+                state_str,                  # ARGV[2]
                 ttl                         # ARGV[3]
             )
             
@@ -166,6 +181,17 @@ class DeviceService:
                 code=ErrorCode.FORBIDDEN,
                 message="High-risk device updates require secondary verification (is_verified=True)"
             )
+
+        # I-2: Deep Sleep Hard Lock for Bed Angle (生理特征强制熔断)
+        # 智能床设备在检测到用户处于深睡时，必须阻止更改角度，防止惊醒，除非有显式的二次验证
+        if device.product_id and "bed" in device.product_id.lower() or device.name and "bed" in device.name.lower():
+            if "angle" in state_update.state.lower():
+                if device.state and "deep_sleep" in device.state.lower():
+                    if not state_update.is_verified:
+                        raise AppException(
+                            code=ErrorCode.FORBIDDEN,
+                            message="Cannot change bed angle during deep sleep without secondary verification (is_verified=True)"
+                        )
 
         # 2. 校验 vector_clock 解决并发竞态问题
         if device.vector_clock != state_update.vector_clock:
