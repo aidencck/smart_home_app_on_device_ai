@@ -32,6 +32,7 @@ class Device(DeviceBase):
 class DeviceStateUpdate(BaseModel):
     state: str = Field(..., description="要更新的设备状态")
     vector_clock: int = Field(..., description="当前持有的 vector_clock 值，用于并发冲突控制")
+    is_verified: bool = Field(default=False, description="Secondary confirmation flag for high-risk devices")
 
 class DeviceBind(BaseModel):
     device_id: str = Field(..., description="要绑定的设备唯一标识")

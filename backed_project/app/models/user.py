@@ -1,3 +1,4 @@
+from app.models.tenant import Tenant
 from sqlalchemy import Column, String, Boolean, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func

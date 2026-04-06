@@ -6,6 +6,9 @@ from typing import List
 from app.api.deps import get_db, get_current_user
 from app.models.automation import Automation
 from app.schemas.automation import AutomationTriggerRequest, AutomationTriggerResponse
+import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -15,27 +18,38 @@ async def trigger_automation(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    user_id = current_user["id"]
+    user_id = current_user.get("id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID not found in token")
+        
     event_type = request.event_type
 
-    # 查询该用户所有启用的自动化规则
-    stmt = select(Automation).where(
-        Automation.user_id == user_id,
-        Automation.is_enabled == True
-    )
-    result = await db.execute(stmt)
-    automations = result.scalars().all()
+    try:
+        # 查询该用户所有启用的自动化规则
+        stmt = select(Automation).where(
+            Automation.user_id == user_id,
+            Automation.is_enabled == True
+        )
+        result = await db.execute(stmt)
+        automations = result.scalars().all()
+    except Exception as e:
+        logger.error(f"Failed to fetch automations: {e}")
+        raise HTTPException(status_code=500, detail="Database error occurred")
 
     matched_rules = 0
     actions_to_execute = []
 
     for auto in automations:
-        # 简单的条件匹配逻辑：检查 condition_json 中是否包含对应的 event_type
-        condition = auto.condition_json
-        if condition.get("event_type") == event_type:
-            matched_rules += 1
-            # 将动作加入待执行列表
-            actions_to_execute.append(auto.action_json)
+        try:
+            # 简单的条件匹配逻辑：检查 condition_json 中是否包含对应的 event_type
+            condition = auto.condition_json
+            if isinstance(condition, dict) and condition.get("event_type") == event_type:
+                matched_rules += 1
+                # 将动作加入待执行列表
+                actions_to_execute.append(auto.action_json)
+        except Exception as e:
+            logger.error(f"Error evaluating rule {auto.id}: {e}")
+            continue
 
     # 模拟执行动作
     return AutomationTriggerResponse(

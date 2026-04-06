@@ -14,6 +14,7 @@ class ChatRequest(BaseSchema):
     query: str = Field(..., min_length=1, max_length=500, description="用户脱敏后的自然语言指令")
     context: List[DeviceStateSnapshot] = Field(default_factory=list, description="当前家庭设备的状态快照")
     hardware_level: Optional[str] = Field("unknown", description="端侧硬件等级评级 (用于辅助决定路由策略)")
+    home_id: Optional[str] = Field(None, description="当前用户的家庭ID，服务端注入用于鉴权")
 
 class CommandAction(BaseSchema):
     """下发给端侧执行的具体指令"""

@@ -154,6 +154,19 @@ class DeviceService:
                 message=f"Device {device_id} not found"
             )
             
+        # I-1: Security Guard / Secondary Confirmation Policy
+        is_high_risk = False
+        if device.product_id and "lock" in device.product_id.lower():
+            is_high_risk = True
+        elif device.name and ("lock" in device.name.lower() or "security" in device.name.lower()):
+            is_high_risk = True
+            
+        if is_high_risk and not state_update.is_verified:
+            raise AppException(
+                code=ErrorCode.FORBIDDEN,
+                message="High-risk device updates require secondary verification (is_verified=True)"
+            )
+
         # 2. 校验 vector_clock 解决并发竞态问题
         if device.vector_clock != state_update.vector_clock:
             raise AppException(

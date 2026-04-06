@@ -29,7 +29,7 @@ async def cloud_ai_fallback(
     4. 调用大模型返回结构化 JSON 指令
     """
     # 强鉴权，防止越权控制其他家庭的设备
-    request.hardware_level = current_user.get("home_id", request.hardware_level)
+    request.home_id = current_user.get("home_id")
     
     response_data = await AIService.process_chat_request(request, redis)
     
@@ -43,11 +43,18 @@ async def get_ai_recommendations(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    user_id = current_user["id"]
-    stmt = select(AIRecommendation).where(AIRecommendation.user_id == user_id)
-    result = await db.execute(stmt)
-    recommendations = result.scalars().all()
-    return recommendations
+    user_id = current_user.get("id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID not found in token")
+        
+    try:
+        # 添加 limit 限制返回数量，避免性能问题
+        stmt = select(AIRecommendation).where(AIRecommendation.user_id == user_id).order_by(AIRecommendation.id.desc()).limit(50)
+        result = await db.execute(stmt)
+        recommendations = result.scalars().all()
+        return recommendations
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Database error occurred while fetching recommendations")
 
 @router.post("/recommendations/{recommendation_id}/accept", response_model=AutomationSchema)
 async def accept_ai_recommendation(
@@ -55,45 +62,88 @@ async def accept_ai_recommendation(
     current_user: dict = Depends(get_current_user),
     db: AsyncSession = Depends(get_db)
 ):
-    user_id = current_user["id"]
+    user_id = current_user.get("id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID not found in token")
     
-    # 查找推荐项
-    stmt = select(AIRecommendation).where(
-        AIRecommendation.id == recommendation_id,
-        AIRecommendation.user_id == user_id
-    )
-    result = await db.execute(stmt)
-    recommendation = result.scalar_one_or_none()
-    
-    if not recommendation:
-        raise HTTPException(status_code=404, detail="AI Recommendation not found")
+    try:
+        # 查找推荐项
+        stmt = select(AIRecommendation).where(
+            AIRecommendation.id == recommendation_id,
+            AIRecommendation.user_id == user_id
+        )
+        result = await db.execute(stmt)
+        recommendation = result.scalar_one_or_none()
         
-    if recommendation.status != "pending":
-        raise HTTPException(status_code=400, detail="Recommendation is not pending")
+        if not recommendation:
+            raise HTTPException(status_code=404, detail="AI Recommendation not found")
+            
+        if recommendation.status != "pending":
+            raise HTTPException(status_code=400, detail="Recommendation is not pending")
+            
+        # 更新状态为已接受
+        recommendation.status = "accepted"
         
-    # 更新状态为已接受
-    recommendation.status = "accepted"
-    
-    # 创建 Automation
-    automation_id = str(uuid.uuid4())
-    action_payload = recommendation.action_payload
-    
-    # 构造默认条件（例如来自 action_payload 或者默认的某种事件）
-    condition = action_payload.get("condition", {"event_type": "USER_ACCEPTED_AI"})
-    action = action_payload.get("action", {})
-    
-    new_automation = Automation(
-        id=automation_id,
-        name=f"Auto from AI: {recommendation.description[:20]}",
-        is_enabled=True,
-        condition_json=condition,
-        action_json=action,
-        user_id=user_id
-    )
-    
-    db.add(new_automation)
-    await db.commit()
-    await db.refresh(new_automation)
-    
-    return new_automation
+        # 创建 Automation
+        automation_id = str(uuid.uuid4())
+        action_payload = recommendation.action_payload if isinstance(recommendation.action_payload, dict) else {}
+        
+        # 构造默认条件（例如来自 action_payload 或者默认的某种事件）
+        condition = action_payload.get("condition", {"event_type": "USER_ACCEPTED_AI"})
+        action = action_payload.get("action", {})
+        
+        new_automation = Automation(
+            id=automation_id,
+            name=f"Auto from AI: {recommendation.description[:20]}",
+            is_enabled=True,
+            condition_json=condition,
+            action_json=action,
+            user_id=user_id
+        )
+        
+        db.add(new_automation)
+        await db.commit()
+        await db.refresh(new_automation)
+        
+        return new_automation
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to accept recommendation")
+
+@router.post("/recommendations/{recommendation_id}/reject", response_model=AIRecommendationSchema)
+async def reject_ai_recommendation(
+    recommendation_id: str,
+    current_user: dict = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    user_id = current_user.get("id")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="User ID not found in token")
+        
+    try:
+        stmt = select(AIRecommendation).where(
+            AIRecommendation.id == recommendation_id,
+            AIRecommendation.user_id == user_id
+        )
+        result = await db.execute(stmt)
+        recommendation = result.scalar_one_or_none()
+        
+        if not recommendation:
+            raise HTTPException(status_code=404, detail="AI Recommendation not found")
+            
+        if recommendation.status != "pending":
+            raise HTTPException(status_code=400, detail="Recommendation is not pending")
+            
+        recommendation.status = "ignored"
+        await db.commit()
+        await db.refresh(recommendation)
+        
+        return recommendation
+    except HTTPException:
+        raise
+    except Exception as e:
+        await db.rollback()
+        raise HTTPException(status_code=500, detail="Failed to reject recommendation")
 

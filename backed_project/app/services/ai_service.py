@@ -9,6 +9,7 @@ from app.schemas.ai import ChatRequest, ChatResponseData, CommandAction, ModelRe
 from app.core.exceptions import AppException, ErrorCode
 from app.core.logger import logger
 from app.core.config import settings
+from app.core.metrics import AI_FALLBACK_COUNT
 
 # 初始化全局 OpenAI 客户端 (可对接 vLLM)
 aclient = AsyncOpenAI(
@@ -72,6 +73,9 @@ class AIService:
                 # 成功命中缓存，更新重放锁的状态
                 await redis.set(idempotency_key, "success_cache", ex=86400)
                 
+                # 记录缓存命中指标
+                AI_FALLBACK_COUNT.labels(status='cache_hit').inc()
+                
                 return ChatResponseData(
                     command_id=request.command_id,
                     reply_text=cache_data.get("reply_text", "已执行"),
@@ -110,6 +114,9 @@ class AIService:
             # 成功处理完毕，更新防重放锁为完成状态
             await redis.set(idempotency_key, "success_llm", ex=86400)
             
+            # 记录LLM成功调用指标
+            AI_FALLBACK_COUNT.labels(status='success').inc()
+            
             # 5. 构造并返回结果，必须原样带回 Command ID
             return ChatResponseData(
                 command_id=request.command_id,
@@ -118,6 +125,9 @@ class AIService:
             )
             
         except Exception as e:
+            # 记录LLM失败调用指标
+            AI_FALLBACK_COUNT.labels(status='failed').inc()
+            
             # 安全修复：发生异常时不再暴力删除锁（会导致重放攻击穿透），
             # 而是将状态更新为 failed，并设置一个极短的重试窗口（如 5 秒），防止恶意请求无脑刷
             await redis.setex(idempotency_key, 5, "failed")

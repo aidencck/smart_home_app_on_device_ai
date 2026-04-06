@@ -3,6 +3,7 @@ import uuid
 from fastapi import Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from app.core.logger import logger
+from app.core.metrics import REQUEST_LATENCY
 
 class RequestLogMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
@@ -19,6 +20,10 @@ class RequestLogMiddleware(BaseHTTPMiddleware):
             process_time = time.time() - start_time
             response.headers["X-Process-Time"] = str(process_time)
             response.headers["X-Request-ID"] = request_id
+            
+            # Record Prometheus request latency metric
+            if request.url.path != "/metrics":
+                REQUEST_LATENCY.labels(method=request.method, endpoint=request.url.path).observe(process_time)
             
             logger.info(
                 f"Request completed: {request.method} {request.url.path} "

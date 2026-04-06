@@ -9,14 +9,14 @@ class Automation(Base):
     is_enabled = Column(Boolean, default=True)
     condition_json = Column(JSON, nullable=False)
     action_json = Column(JSON, nullable=False)
-    user_id = Column(String, ForeignKey("user.id"), nullable=False)
+    user_id = Column(String, ForeignKey("user.id"), nullable=False, index=True)
 
     user = relationship("User")
 
 class AIRecommendation(Base):
     __tablename__ = "ai_recommendation"
     id = Column(String, primary_key=True, index=True)
-    user_id = Column(String, ForeignKey("user.id"), nullable=False)
+    user_id = Column(String, ForeignKey("user.id"), nullable=False, index=True)
     description = Column(String, nullable=False)
     status = Column(String, default="pending") # pending, accepted, rejected
     action_payload = Column(JSON, nullable=False)

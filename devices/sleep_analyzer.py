@@ -14,12 +14,13 @@ class SleepStage(Enum):
     DEEP_SLEEP = "DEEP_SLEEP"
 
 class SleepAnalyzer:
-    def __init__(self, device_id="ring_001", window_size=5):
+    def __init__(self, device_id="ring_001", window_size=5, token=""):
         self.device_id = device_id
         self.trigger_url = "http://127.0.0.1:8000/api/v1/automations/trigger"
         self.window_size = window_size
         self.data_window = deque(maxlen=window_size)
         self.current_stage = SleepStage.AWAKE
+        self.token = token
         
     def simulate_data(self):
         """模拟智能戒指采集的生理和运动数据"""
@@ -49,14 +50,20 @@ class SleepAnalyzer:
     def trigger_automation(self, new_stage):
         """状态改变时触发自动化 webhook，使用防阻塞超时机制"""
         payload = {
-            "device_id": self.device_id,
-            "event_type": new_stage.name
+            "event_type": new_stage.name,
+            "payload": {
+                "device_id": self.device_id
+            }
         }
         
+        headers = {}
+        if self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+            
         try:
             logging.info(f"正在向服务端推送状态更新: {payload}")
             # 设置短超时时间 (3秒) 避免阻塞，确保数据采集不受网络影响
-            response = requests.post(self.trigger_url, json=payload, timeout=3.0)
+            response = requests.post(self.trigger_url, json=payload, headers=headers, timeout=3.0)
             response.raise_for_status()
             logging.info(f"推送成功，服务端响应状态码: {response.status_code}")
             
@@ -64,6 +71,8 @@ class SleepAnalyzer:
             logging.warning("HTTP 请求超时，跳过本次触发。系统将继续运行...")
         except requests.exceptions.ConnectionError:
             logging.error("连接服务端失败 (ConnectionError)，请检查服务是否启动。")
+        except requests.exceptions.HTTPError as e:
+            logging.error(f"HTTP 请求返回错误状态码: {e}")
         except requests.exceptions.RequestException as e:
             logging.error(f"HTTP 请求遇到异常: {e}")
 

@@ -1,9 +1,10 @@
 import os
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from contextlib import asynccontextmanager
+from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
 
 from app.core.config import settings
 from app.core.logger import setup_logging, logger
@@ -99,6 +100,13 @@ async def health_check():
     Check if the API and connections are healthy.
     """
     return {"status": "healthy", "version": settings.VERSION, "role": service_role}
+
+@app.get("/metrics", tags=["Metrics"])
+async def metrics():
+    """
+    Expose Prometheus metrics.
+    """
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 # Mount static files for admin dashboard
 app.mount("/static", StaticFiles(directory="static"), name="static")
