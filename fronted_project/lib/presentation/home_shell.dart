@@ -25,28 +25,28 @@ class _HomeShellState extends ConsumerState<HomeShell> {
     AiRecommendationScreen(),
   ];
 
-  final List<NavigationDestination> _destinations = const [
-    NavigationDestination(
+  final List<NavigationDestination> _destinations = [
+    const NavigationDestination(
       icon: Icon(Icons.home_outlined),
       selectedIcon: Icon(Icons.home),
       label: '首页',
     ),
-    NavigationDestination(
+    const NavigationDestination(
       icon: Icon(Icons.meeting_room_outlined),
       selectedIcon: Icon(Icons.meeting_room),
       label: '房间',
     ),
-    NavigationDestination(
+    const NavigationDestination(
       icon: Icon(Icons.auto_awesome_outlined),
       selectedIcon: Icon(Icons.auto_awesome),
       label: '场景',
     ),
-    NavigationDestination(
+    const NavigationDestination(
       icon: Icon(Icons.rule_outlined),
       selectedIcon: Icon(Icons.rule),
       label: '自动化',
     ),
-    NavigationDestination(
+    const NavigationDestination(
       icon: Icon(Icons.smart_toy_outlined),
       selectedIcon: Icon(Icons.smart_toy),
       label: 'AI',
