@@ -18,6 +18,40 @@ A next-generation Smart Home application demonstrating the **production-ready im
 
 这是一个致力于探索和展示 **“端侧大模型 + Agent” 真实落地能力** 的智能家居开源项目。它彻底抛弃了纯云端 API 的重度依赖，在移动设备本地完成了从自然语言理解、意图规划到 IoT 硬件控制的完整 Agent 闭环，并辅以轻量级云端兜底，构建了完整的端云协同体系。
 
+### 🧠 端侧主动智能编排架构 (On-Device Zero-UI Orchestration)
+
+```mermaid
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#1A1A1D', 'primaryTextColor': '#00FF41', 'primaryBorderColor': '#00FF41', 'lineColor': '#00FF41', 'secondaryColor': '#0A0A0C', 'tertiaryColor': '#2B2B36' }}}%% 
+flowchart TD 
+    classDef sensing fill:#1A1A1D,stroke:#00FF41,stroke-width:2px,color:#00FF41,font-family:monospace; 
+    classDef brain fill:#0A0A0C,stroke:#00E5FF,stroke-width:2px,color:#00E5FF,font-family:monospace; 
+    classDef acting fill:#2B2B36,stroke:#FF0055,stroke-width:2px,color:#FF0055,font-family:monospace; 
+
+    subgraph "感知层 (Input)" 
+        Ring["智能戒指 (HR/HRV/Movement)"]:::sensing 
+        Bed_S["床体压力传感器 (Occupancy)"]:::sensing 
+        TV_S["电视状态 (App Usage/Volume)"]:::sensing 
+        Radar["毫米波雷达 (Presence/Respiration)"]:::sensing 
+    end 
+
+    subgraph "决策层 (Edge AI Brain)" 
+        Hub["Luma Edge Hub (llama.cpp)"]:::brain 
+        Logic["情境引擎 (Context Engine)"]:::brain 
+        Safety["GBNF 安全网关"]:::brain 
+    end 
+
+    subgraph "执行层 (Output)" 
+        Bed_A["智能床 (姿态/震动/温控)"]:::acting 
+        TV_A["电视 (UI反馈/助眠媒体)"]:::acting 
+        AC["空调 (温度/风速曲线)"]:::acting 
+        Light["灯光 (色温/渐变)"]:::acting 
+    end 
+
+    Ring & Bed_S & TV_S & Radar --> Hub 
+    Hub --> Logic --> Safety 
+    Safety --> Bed_A & TV_A & AC & Light 
+```
+
 ---
 
 ## 🌍 商业洞察与战略规划 (Business & Strategic Overview)
