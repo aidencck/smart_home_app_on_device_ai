@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { HeartPulse, BedDouble, Tv, Thermometer, Waves, Volume2, Sun, MoonStar, VolumeX, Layers, Lightbulb, Lock } from 'lucide-react';
 import { Toaster, toast } from 'sonner';
@@ -51,6 +51,58 @@ export default function App() {
   const [homeData, setHomeData] = useState(MOCK_INITIAL_DATA);
   const [shakeLock, setShakeLock] = useState(false);
   const [originalBedAngle, setOriginalBedAngle] = useState(MOCK_INITIAL_DATA.devices.bed.state.angle);
+  const [isAudioMuted, setIsAudioMuted] = useState(false);
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
+  // Initialize Audio
+  useEffect(() => {
+    if (!audioRef.current) {
+      audioRef.current = new Audio();
+      audioRef.current.loop = true;
+      audioRef.current.onplay = () => setIsAudioPlaying(true);
+      audioRef.current.onpause = () => setIsAudioPlaying(false);
+    }
+  }, []);
+
+  // Sync Audio with Phase
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const phaseId = getPhaseFromStage(homeData.sleep_stage);
+    
+    if (isAudioMuted) {
+      audio.pause();
+      return;
+    }
+
+    if (phaseId === 1) {
+      // 白噪音 (Rain/Wind down)
+      audio.src = 'https://actions.google.com/sounds/v1/weather/rain_heavy_loud.ogg';
+      audio.volume = 0.3;
+      audio.play().catch(() => setIsAudioPlaying(false));
+    } else if (phaseId === 2) {
+      // 深睡 (Silence)
+      audio.pause();
+    } else if (phaseId === 3) {
+      // 晨音 (Morning nature)
+      audio.src = 'https://actions.google.com/sounds/v1/nature/morning_in_rural_village.ogg';
+      audio.volume = 0.5;
+      audio.play().catch(() => setIsAudioPlaying(false));
+    }
+  }, [homeData.sleep_stage, isAudioMuted]);
+
+  const toggleAudioMute = () => {
+    setIsAudioMuted(prev => !prev);
+    if (isAudioMuted && audioRef.current) {
+      // We are unmuting, attempt to play immediately if applicable
+      const phaseId = getPhaseFromStage(homeData.sleep_stage);
+      if (phaseId !== 2) {
+        audioRef.current.play().catch(e => console.error('Play prevented:', e));
+      }
+    }
+  };
 
   const fetchHomeSummary = useCallback(async () => {
     try {
@@ -389,9 +441,16 @@ export default function App() {
                 <Thermometer size={18} className={phase === 2 ? 'text-blue-400' : 'text-orange-400'} />
                 <span>环境温控: <span className="font-medium tracking-wide">{state.bed.temp}</span></span>
               </div>
-              <div className="bg-black/30 backdrop-blur-xl px-5 py-3 rounded-full border border-white/10 flex items-center gap-3 text-sm text-white shadow-2xl">
-                <Volume2 size={18} className={phase === 2 ? 'text-slate-400' : 'text-emerald-400'} />
-                <span>全景声场: <span className="font-medium tracking-wide">{state.tv.audio}</span></span>
+              <div 
+                className="bg-black/30 backdrop-blur-xl px-5 py-3 rounded-full border border-white/10 flex items-center gap-3 text-sm text-white shadow-2xl cursor-pointer hover:bg-white/10 transition-colors"
+                onClick={toggleAudioMute}
+              >
+                {isAudioMuted || !isAudioPlaying || phase === 2 ? (
+                  <VolumeX size={18} className="text-slate-400" />
+                ) : (
+                  <Volume2 size={18} className="text-emerald-400 animate-pulse" />
+                )}
+                <span>全景声场: <span className="font-medium tracking-wide">{isAudioMuted ? '已静音' : state.tv.audio}</span></span>
               </div>
             </div>
           </div>
