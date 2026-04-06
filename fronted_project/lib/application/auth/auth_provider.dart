@@ -36,15 +36,21 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> _loadInitialState() async {
     final prefs = await SharedPreferences.getInstance();
-    final token = prefs.getString('auth_token');
+    String? token = prefs.getString('auth_token');
     final hasAgreed = prefs.getBool('privacy_agreed') ?? false;
+    
+    // Always override mock token for development
+    if (token != null && token != 'mock_token') {
+      token = 'mock_token';
+      await prefs.setString('auth_token', token);
+    }
     
     if (token != null) {
       state = AuthState(
         isAuthenticated: true,
         hasAgreedToPrivacy: hasAgreed,
         token: token,
-        userId: 'user_123',
+        userId: 'simulated_user_id',
       );
     }
   }
@@ -52,7 +58,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> login(String email, String password) async {
     // Mock login logic
     await Future.delayed(const Duration(milliseconds: 500));
-    final token = 'mock_jwt_token_123';
+    final token = 'mock_token'; // Changed to match backend test fallback
     
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('auth_token', token);
@@ -60,7 +66,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     state = state.copyWith(
       isAuthenticated: true,
       token: token,
-      userId: 'user_123',
+      userId: 'simulated_user_id',
     );
   }
 
