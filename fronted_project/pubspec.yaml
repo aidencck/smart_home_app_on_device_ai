@@ -44,6 +44,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   local_auth: ^3.0.1
   shared_preferences: ^2.5.5
+  flutter_blue_plus: ^2.2.1
 
 dev_dependencies:
   flutter_test:

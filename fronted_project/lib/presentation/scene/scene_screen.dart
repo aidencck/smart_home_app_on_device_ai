@@ -2,30 +2,70 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // 模拟的全局状态 Provider，用于切换是否展示骨架屏
-final sceneLoadingProvider = StateProvider<bool>((ref) => true);
+final sceneLoadingProvider = StateProvider<bool>((ref) => false);
 
-class SceneScreen extends ConsumerWidget {
+class SceneScreen extends ConsumerStatefulWidget {
   const SceneScreen({Key? key}) : super(key: key);
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<SceneScreen> createState() => _SceneScreenState();
+}
+
+class _SceneScreenState extends ConsumerState<SceneScreen> with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final isLoading = ref.watch(sceneLoadingProvider);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: const Text('场景空间', style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold)),
+        title: Text('场景空间', style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: colorScheme.primary,
+          unselectedLabelColor: colorScheme.onSurfaceVariant,
+          indicatorColor: colorScheme.primary,
+          tabs: const [
+            Tab(text: '预设'),
+            Tab(text: '我的'),
+            Tab(text: '收藏'),
+          ],
+        ),
         actions: [
           Switch(
             value: isLoading,
-            activeColor: Colors.black87,
+            activeColor: colorScheme.primary,
             onChanged: (val) => ref.read(sceneLoadingProvider.notifier).state = val,
           )
         ],
       ),
-      body: isLoading ? const _SceneListSkeleton() : const _SceneListContent(),
+      body: isLoading 
+          ? const _SceneListSkeleton() 
+          : TabBarView(
+              controller: _tabController,
+              children: [
+                const _PresetScenesList(),
+                const Center(child: Text('我的场景空空如也')),
+                const Center(child: Text('暂无收藏场景')),
+              ],
+            ),
     );
   }
 }
@@ -41,18 +81,11 @@ class _SceneListSkeleton extends StatelessWidget {
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         return Container(
-          height: 140,
+          height: 120,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              )
-            ],
+            color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -82,16 +115,18 @@ class _SceneListSkeleton extends StatelessWidget {
   }
 }
 
-class _SceneListContent extends StatelessWidget {
-  const _SceneListContent();
+class _PresetScenesList extends StatelessWidget {
+  const _PresetScenesList();
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
     final scenes = [
-      {'name': '坠入梦境', 'status': 'Active', 'icon': Icons.nights_stay, 'color': [const Color(0xFF2C3E50), const Color(0xFF3498DB)]},
-      {'name': '晨起唤醒', 'status': 'Inactive', 'icon': Icons.wb_sunny, 'color': [Colors.white, Colors.white]},
-      {'name': '专注模式', 'status': 'Inactive', 'icon': Icons.computer, 'color': [Colors.white, Colors.white]},
-      {'name': '离家安防', 'status': 'Inactive', 'icon': Icons.security, 'color': [Colors.white, Colors.white]},
+      {'name': '睡前', 'status': 'Active', 'icon': Icons.bedtime},
+      {'name': '夜起', 'status': 'Inactive', 'icon': Icons.nights_stay},
+      {'name': '晨起', 'status': 'Inactive', 'icon': Icons.wb_sunny},
+      {'name': '阅读', 'status': 'Inactive', 'icon': Icons.menu_book},
+      {'name': '放松', 'status': 'Inactive', 'icon': Icons.spa},
     ];
 
     return ListView.separated(
@@ -100,8 +135,7 @@ class _SceneListContent extends StatelessWidget {
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final scene = scenes[index];
-        final isDark = index == 0;
-        final gradientColors = scene['color'] as List<Color>;
+        final isActive = scene['status'] == 'Active';
 
         return GestureDetector(
           onTap: () {
@@ -112,49 +146,62 @@ class _SceneListContent extends StatelessWidget {
               ),
             );
           },
-          child: Container(
-            height: 140,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(colors: gradientColors),
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                )
-              ],
+          child: Card(
+            elevation: isActive ? 2 : 0,
+            color: isActive ? colorScheme.primaryContainer : colorScheme.surfaceContainerLow,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(24),
+              side: BorderSide(
+                color: isActive ? colorScheme.primary.withOpacity(0.5) : Colors.transparent,
+                width: 1,
+              ),
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      scene['name'] as String,
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: isDark ? Colors.white : Colors.black87,
-                      ),
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: isActive ? colorScheme.primary.withOpacity(0.2) : colorScheme.surfaceContainerHighest,
+                      shape: BoxShape.circle,
                     ),
-                    Icon(
+                    child: Icon(
                       scene['icon'] as IconData,
-                      color: isDark ? Colors.white70 : Colors.black54,
+                      color: isActive ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                      size: 28,
                     ),
-                  ],
-                ),
-                const Spacer(),
-                Text(
-                  isDark ? '正在运行中...' : '点击进入详情',
-                  style: TextStyle(
-                    color: isDark ? Colors.white70 : Colors.black38,
-                    fontSize: 14,
                   ),
-                )
-              ],
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          scene['name'] as String,
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: isActive ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          isActive ? '运行中' : '点击激活',
+                          style: TextStyle(
+                            color: isActive ? colorScheme.onPrimaryContainer.withOpacity(0.8) : colorScheme.onSurfaceVariant,
+                            fontSize: 14,
+                          ),
+                        )
+                      ],
+                    ),
+                  ),
+                  if (isActive)
+                    Icon(Icons.check_circle, color: colorScheme.primary)
+                  else
+                    Icon(Icons.play_circle_outline, color: colorScheme.onSurfaceVariant),
+                ],
+              ),
             ),
           ),
         );
@@ -172,16 +219,17 @@ class SceneDetailScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // 复用列表页的加载状态或独立状态
     final isLoading = ref.watch(sceneLoadingProvider);
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text('$sceneName 详情', style: const TextStyle(color: Colors.black87)),
+        title: Text('$sceneName 详情', style: TextStyle(color: colorScheme.onSurface)),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        iconTheme: const IconThemeData(color: Colors.black87),
+        iconTheme: IconThemeData(color: colorScheme.onSurface),
       ),
-      body: isLoading ? const _SceneDetailSkeleton() : const Center(child: Text('场景详细配置区域')),
+      body: isLoading ? const _SceneDetailSkeleton() : Center(child: Text('场景详细配置区域', style: TextStyle(color: colorScheme.onSurface))),
     );
   }
 }
@@ -197,7 +245,7 @@ class _SceneDetailSkeleton extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // 顶部封面图/状态卡片骨架
-          const _SkeletonBox(height: 200, width: double.infinity, borderRadius: 16),
+          const _SkeletonBox(height: 200, width: double.infinity, borderRadius: 24),
           const SizedBox(height: 24),
           // 场景执行动作标题骨架
           const _SkeletonBox(height: 24, width: 150, borderRadius: 4),
@@ -208,7 +256,7 @@ class _SceneDetailSkeleton extends StatelessWidget {
               itemCount: 4,
               itemBuilder: (context, index) => const Padding(
                 padding: EdgeInsets.only(bottom: 12.0),
-                child: _SkeletonBox(height: 80, width: double.infinity, borderRadius: 12),
+                child: _SkeletonBox(height: 80, width: double.infinity, borderRadius: 20),
               ),
             ),
           )
@@ -236,7 +284,7 @@ class _SkeletonBox extends StatelessWidget {
       height: height,
       width: width,
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.06),
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
         borderRadius: BorderRadius.circular(borderRadius),
       ),
     );
