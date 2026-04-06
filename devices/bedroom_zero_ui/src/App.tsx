@@ -145,6 +145,15 @@ export default function App() {
       sleep_stage: stageMap[phaseId],
       devices: {
         ...prev.devices,
+        ring: {
+          ...prev.devices.ring,
+          state: {
+            ...prev.devices.ring.state,
+            stage: phaseId === 1 ? '浅睡眠 (入睡期)' : phaseId === 2 ? '深度睡眠' : '清醒 (快速眼动)',
+            hr: phaseId === 1 ? 68 : phaseId === 2 ? 55 : 75,
+            hrv: phaseId === 1 ? '45ms (正常)' : phaseId === 2 ? '65ms (极佳)' : '35ms (偏低)'
+          }
+        },
         bed: {
           ...prev.devices.bed,
           state: { 
@@ -188,24 +197,26 @@ export default function App() {
         transition={{ duration: 1.5, ease: "easeInOut" }}
       />
 
-      <div className="relative z-10 min-h-screen text-slate-200 font-sans selection:bg-indigo-500/30 flex flex-col overflow-y-auto">
+      <div className="relative z-10 h-screen text-slate-200 font-sans selection:bg-indigo-500/30 flex flex-col overflow-hidden">
         {/* Header & Phase Selector */}
-        <header className="px-8 py-6 border-b border-white/10 bg-black/20 backdrop-blur-2xl sticky top-0 z-50">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl font-semibold text-white flex items-center gap-3 drop-shadow-md">
-              <MoonStar className="text-indigo-400" />
-              卧室无感智能联动演示 (Zero-UI)
-            </h1>
-            <p className="text-slate-300 mt-2 text-sm drop-shadow">
-              基于智能戒指实时生理数据的多设备无缝协同体验
-            </p>
+        <header className="px-6 py-4 border-b border-white/10 bg-black/20 backdrop-blur-2xl sticky top-0 z-50 flex-shrink-0">
+          <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-xl font-semibold text-white flex items-center gap-3 drop-shadow-md">
+                <MoonStar className="text-indigo-400" />
+                卧室无感智能联动 (Zero-UI)
+              </h1>
+              <p className="text-slate-300 mt-1 text-xs drop-shadow">
+                基于智能戒指实时生理数据的多设备无缝协同体验
+              </p>
+            </div>
             
-            <div className="flex gap-4 mt-6 relative">
+            <div className="flex gap-2">
               {PHASES.map((p) => (
                 <button
                   key={p.id}
                   onClick={() => setSimulatedPhase(p.id)}
-                  className={`flex-1 relative p-4 rounded-2xl text-left transition-all duration-300 ${
+                  className={`relative p-2 px-4 rounded-xl text-left transition-all duration-300 ${
                     phase === p.id 
                       ? 'bg-white/20 border-white/40 shadow-[0_0_20px_rgba(255,255,255,0.1)]' 
                       : 'bg-black/20 border-white/10 hover:bg-white/10'
@@ -214,17 +225,16 @@ export default function App() {
                   {phase === p.id && (
                     <motion.div
                       layoutId="activePhase"
-                      className="absolute inset-0 rounded-2xl border-2 border-white/50"
+                      className="absolute inset-0 rounded-xl border-2 border-white/50"
                       initial={false}
                       transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     />
                   )}
-                  <div className="relative z-10">
-                    <div className="text-xs font-mono text-indigo-300 mb-1 drop-shadow">PHASE {p.id}</div>
-                    <div className={`font-medium ${phase === p.id ? 'text-white' : 'text-slate-300'} drop-shadow`}>
+                  <div className="relative z-10 flex flex-col">
+                    <div className="text-[10px] font-mono text-indigo-300 drop-shadow">PHASE {p.id}</div>
+                    <div className={`text-sm font-medium ${phase === p.id ? 'text-white' : 'text-slate-300'} drop-shadow whitespace-nowrap`}>
                       {p.name}
                     </div>
-                    <div className="text-xs text-slate-300 mt-1 line-clamp-1 drop-shadow">{p.desc}</div>
                   </div>
                 </button>
               ))}
@@ -233,12 +243,12 @@ export default function App() {
         </header>
 
         {/* Main Content */}
-        <main className="flex-1 max-w-7xl mx-auto w-full p-6 flex flex-col gap-10 pb-20">
+        <main className="flex-1 min-h-0 max-w-7xl mx-auto w-full p-4 flex flex-col gap-4 overflow-y-auto">
           
           {/* ========================================================= */}
           {/* 真实的房间模拟视图 (Real Room Simulation)                     */}
           {/* ========================================================= */}
-          <div className="relative w-full h-[450px] bg-black/40 backdrop-blur-3xl rounded-[2.5rem] overflow-hidden border border-white/10 shadow-2xl flex-shrink-0 flex items-end justify-center">
+          <div className="relative w-full flex-1 min-h-[25vh] bg-black/40 backdrop-blur-3xl rounded-[2rem] overflow-hidden border border-white/10 shadow-2xl flex items-end justify-center">
             
             {/* 全局光影滤镜 (Global Lighting Overlay) */}
             <motion.div 
@@ -389,80 +399,80 @@ export default function App() {
           {/* ========================================================= */}
           {/* 底部详细数据控制台 (Detailed Data Dashboard)                */}
           {/* ========================================================= */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-shrink-0">
             
             {/* Device 1: Smart Ring */}
-            <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 relative overflow-hidden flex flex-col shadow-xl">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-rose-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-              <div className="flex items-center gap-4 mb-8">
-                <div className="p-3 bg-white/5 border border-white/10 rounded-2xl text-rose-400 shadow-inner">
-                  <HeartPulse size={24} />
+            <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 relative overflow-hidden flex flex-col shadow-xl h-[420px]">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-rose-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-rose-400 shadow-inner">
+                  <HeartPulse size={20} />
                 </div>
-                <h2 className="text-lg font-medium text-white tracking-wide">智能戒指 <span className="text-white/50 text-sm ml-2 font-normal">感知核心</span></h2>
+                <h2 className="text-base font-medium text-white tracking-wide">智能戒指 <span className="text-white/50 text-xs ml-2 font-normal">感知核心</span></h2>
               </div>
               
-              <div className="flex-1 flex flex-col gap-8">
-                <div className="flex justify-center items-center h-32">
+              <div className="flex-1 flex flex-col gap-4">
+                <div className="flex justify-center items-center h-24">
                   {/* Breathing Halo */}
-                  <motion.div className="relative flex items-center justify-center w-32 h-32">
+                  <motion.div className="relative flex items-center justify-center w-24 h-24">
                     <motion.div
                       className="absolute inset-0 rounded-full border border-rose-500/40"
                       animate={{ scale: [1, 1.6, 1], opacity: [0.5, 0, 0.5] }}
                       transition={{ repeat: Infinity, duration: 60 / state.ring.hr, ease: "easeInOut" }}
                     />
                     <motion.div
-                      className="absolute inset-4 rounded-full border-2 border-rose-400/30 bg-rose-500/5"
+                      className="absolute inset-3 rounded-full border-2 border-rose-400/30 bg-rose-500/5"
                       animate={{ scale: [1, 1.3, 1], opacity: [0.8, 0, 0.8] }}
                       transition={{ repeat: Infinity, duration: 60 / state.ring.hr, ease: "easeInOut", delay: 0.2 }}
                     />
                     <div className="relative z-10 flex items-baseline gap-1 text-rose-400 drop-shadow-[0_0_10px_rgba(244,63,94,0.5)]">
-                      <span className="text-5xl font-light tracking-tighter">{state.ring.hr}</span>
-                      <span className="text-sm font-mono opacity-60 mb-1">BPM</span>
+                      <span className="text-4xl font-light tracking-tighter">{state.ring.hr}</span>
+                      <span className="text-[10px] font-mono opacity-60 mb-1">BPM</span>
                     </div>
                   </motion.div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="bg-black/20 border border-white/5 rounded-2xl p-4">
-                    <div className="text-[11px] text-white/40 mb-1.5 uppercase tracking-wider">睡眠阶段</div>
-                    <div className="text-sm font-medium text-indigo-300 truncate">{state.ring.stage}</div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="bg-black/20 border border-white/5 rounded-xl p-3">
+                    <div className="text-[10px] text-white/40 mb-1 uppercase tracking-wider">睡眠阶段</div>
+                    <div className="text-xs font-medium text-indigo-300 truncate">{state.ring.stage}</div>
                   </div>
-                  <div className="bg-black/20 border border-white/5 rounded-2xl p-4">
-                    <div className="text-[11px] text-white/40 mb-1.5 uppercase tracking-wider">心率变异性</div>
-                    <div className="text-sm font-medium text-teal-300 truncate">{state.ring.hrv}</div>
+                  <div className="bg-black/20 border border-white/5 rounded-xl p-3">
+                    <div className="text-[10px] text-white/40 mb-1 uppercase tracking-wider">心率变异性</div>
+                    <div className="text-xs font-medium text-teal-300 truncate">{state.ring.hrv}</div>
                   </div>
-                  <div className="bg-black/20 border border-white/5 rounded-2xl p-4">
-                    <div className="text-[11px] text-white/40 mb-1.5 uppercase tracking-wider">血氧饱和度</div>
-                    <div className="text-sm font-medium text-blue-300 truncate">{state.ring.spo2}%</div>
+                  <div className="bg-black/20 border border-white/5 rounded-xl p-3">
+                    <div className="text-[10px] text-white/40 mb-1 uppercase tracking-wider">血氧饱和度</div>
+                    <div className="text-xs font-medium text-blue-300 truncate">{state.ring.spo2}%</div>
                   </div>
-                  <div className="bg-black/20 border border-white/5 rounded-2xl p-4">
-                    <div className="text-[11px] text-white/40 mb-1.5 uppercase tracking-wider">体表温度</div>
-                    <div className="text-sm font-medium text-orange-300 truncate">{state.ring.temp}°C</div>
+                  <div className="bg-black/20 border border-white/5 rounded-xl p-3">
+                    <div className="text-[10px] text-white/40 mb-1 uppercase tracking-wider">体表温度</div>
+                    <div className="text-xs font-medium text-orange-300 truncate">{state.ring.temp}°C</div>
                   </div>
                 </div>
               </div>
             </div>
 
             {/* Device 2: Smart Bed */}
-            <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 relative overflow-hidden flex flex-col shadow-xl">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-cyan-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-              <div className="flex items-center gap-4 mb-8">
-                <div className="p-3 bg-white/5 border border-white/10 rounded-2xl text-cyan-400 shadow-inner">
-                  <BedDouble size={24} />
+            <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 relative overflow-hidden flex flex-col shadow-xl h-[420px]">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-cyan-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-cyan-400 shadow-inner">
+                  <BedDouble size={20} />
                 </div>
-                <h2 className="text-lg font-medium text-white tracking-wide">智能床 <span className="text-white/50 text-sm ml-2 font-normal">执行终端</span></h2>
+                <h2 className="text-base font-medium text-white tracking-wide">智能床 <span className="text-white/50 text-xs ml-2 font-normal">执行终端</span></h2>
               </div>
               
-              <div className="flex-1 flex flex-col gap-4">
+              <div className="flex-1 flex flex-col gap-3">
                 
                 {/* 可交互的床头仰角滑块 */}
-                <div className="bg-black/20 border border-white/5 rounded-2xl p-5 flex flex-col gap-4 relative overflow-hidden">
+                <div className="bg-black/20 border border-white/5 rounded-xl p-4 flex flex-col gap-3 relative overflow-hidden">
                   <div className="flex items-center justify-between">
                     <div>
-                      <div className="text-[11px] text-white/40 mb-1 uppercase tracking-wider">床头仰角控制</div>
-                      <div className="text-xl font-medium text-white">{state.bed.angle}°</div>
+                      <div className="text-[10px] text-white/40 mb-1 uppercase tracking-wider">床头仰角控制</div>
+                      <div className="text-lg font-medium text-white">{state.bed.angle}°</div>
                     </div>
-                    <div className="text-xs font-mono text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 px-3 py-1.5 rounded-full">
+                    <div className="text-[10px] font-mono text-cyan-300 bg-cyan-500/10 border border-cyan-500/20 px-2 py-1 rounded-full">
                       {state.bed.angle === 15 ? '零重力/阅读' : state.bed.angle === 0 ? '平躺深睡' : '自定义'}
                     </div>
                   </div>
@@ -529,27 +539,27 @@ export default function App() {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="flex flex-col gap-4 overflow-hidden"
+                      className="flex flex-col gap-3 overflow-hidden"
                     >
-                      <div className="bg-black/20 border border-white/5 rounded-2xl p-4 flex items-center gap-4">
-                        <div className="p-2.5 bg-indigo-500/10 rounded-xl"><Waves className="text-indigo-400" size={20} /></div>
+                      <div className="bg-black/20 border border-white/5 rounded-xl p-3 flex items-center gap-3">
+                        <div className="p-2 bg-indigo-500/10 rounded-lg"><Waves className="text-indigo-400" size={18} /></div>
                         <div>
-                          <div className="text-[11px] text-white/40 mb-0.5 uppercase tracking-wider">震动反馈</div>
-                          <div className="text-sm font-medium text-white">{state.bed.vibration}</div>
+                          <div className="text-[10px] text-white/40 mb-0.5 uppercase tracking-wider">震动反馈</div>
+                          <div className="text-xs font-medium text-white">{state.bed.vibration}</div>
                         </div>
                       </div>
-                      <div className="bg-black/20 border border-white/5 rounded-2xl p-4 flex items-center gap-4">
-                        <div className="p-2.5 bg-orange-500/10 rounded-xl"><Thermometer className="text-orange-400" size={20} /></div>
+                      <div className="bg-black/20 border border-white/5 rounded-xl p-3 flex items-center gap-3">
+                        <div className="p-2 bg-orange-500/10 rounded-lg"><Thermometer className="text-orange-400" size={18} /></div>
                         <div>
-                          <div className="text-[11px] text-white/40 mb-0.5 uppercase tracking-wider">恒温系统</div>
-                          <div className="text-sm font-medium text-white">{state.bed.temp}</div>
+                          <div className="text-[10px] text-white/40 mb-0.5 uppercase tracking-wider">恒温系统</div>
+                          <div className="text-xs font-medium text-white">{state.bed.temp}</div>
                         </div>
                       </div>
-                      <div className="bg-black/20 border border-white/5 rounded-2xl p-4 flex items-center gap-4">
-                        <div className="p-2.5 bg-purple-500/10 rounded-xl"><Layers className="text-purple-400" size={20} /></div>
+                      <div className="bg-black/20 border border-white/5 rounded-xl p-3 flex items-center gap-3">
+                        <div className="p-2 bg-purple-500/10 rounded-lg"><Layers className="text-purple-400" size={18} /></div>
                         <div>
-                          <div className="text-[11px] text-white/40 mb-0.5 uppercase tracking-wider">分区支撑度</div>
-                          <div className="text-sm font-medium text-white">{state.bed.support_level}</div>
+                          <div className="text-[10px] text-white/40 mb-0.5 uppercase tracking-wider">分区支撑度</div>
+                          <div className="text-xs font-medium text-white">{state.bed.support_level}</div>
                         </div>
                       </div>
                     </motion.div>
@@ -559,23 +569,23 @@ export default function App() {
             </div>
 
             {/* Device 3: Smart TV */}
-            <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 relative overflow-hidden flex flex-col shadow-xl">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
-              <div className="flex items-center gap-4 mb-8">
-                <div className="p-3 bg-white/5 border border-white/10 rounded-2xl text-amber-400 shadow-inner">
-                  <Tv size={24} />
+            <div className="bg-black/20 backdrop-blur-2xl border border-white/10 rounded-[1.5rem] p-5 relative overflow-hidden flex flex-col shadow-xl h-[420px]">
+              <div className="absolute top-0 right-0 w-48 h-48 bg-amber-500/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+              <div className="flex items-center gap-3 mb-4">
+                <div className="p-2.5 bg-white/5 border border-white/10 rounded-xl text-amber-400 shadow-inner">
+                  <Tv size={20} />
                 </div>
-                <h2 className="text-lg font-medium text-white tracking-wide">智能电视 <span className="text-white/50 text-sm ml-2 font-normal">视听环境</span></h2>
+                <h2 className="text-base font-medium text-white tracking-wide">智能电视 <span className="text-white/50 text-xs ml-2 font-normal">视听环境</span></h2>
               </div>
               
-              <div className="flex-1 flex flex-col gap-4">
-                <div className="bg-black/20 border border-white/5 rounded-2xl p-5 flex items-center gap-4">
-                  <div className="p-2.5 bg-amber-500/10 rounded-xl"><Sun className="text-amber-400" size={20} /></div>
+              <div className="flex-1 flex flex-col gap-3">
+                <div className="bg-black/20 border border-white/5 rounded-xl p-4 flex items-center gap-3">
+                  <div className="p-2 bg-amber-500/10 rounded-lg"><Sun className="text-amber-400" size={18} /></div>
                   <div className="flex-1">
-                    <div className="text-[11px] text-white/40 mb-0.5 uppercase tracking-wider">屏幕画面</div>
-                    <div className="text-sm font-medium text-white">{state.tv.visual}</div>
+                    <div className="text-[10px] text-white/40 mb-0.5 uppercase tracking-wider">屏幕画面</div>
+                    <div className="text-xs font-medium text-white">{state.tv.visual}</div>
                   </div>
-                  <div className="text-xs font-mono text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-full">
+                  <div className="text-[10px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2 py-1 rounded-full">
                     {state.tv.brightness}%
                   </div>
                 </div>
@@ -586,22 +596,22 @@ export default function App() {
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: 'auto' }}
                       exit={{ opacity: 0, height: 0 }}
-                      className="flex flex-col gap-4 overflow-hidden"
+                      className="flex flex-col gap-3 overflow-hidden"
                     >
-                      <div className="bg-black/20 border border-white/5 rounded-2xl p-5 flex items-center gap-4">
-                        <div className={`p-2.5 rounded-xl ${phase === 2 ? 'bg-white/5' : 'bg-emerald-500/10'}`}>
-                          {phase === 2 ? <VolumeX className="text-white/40" size={20} /> : <Volume2 className="text-emerald-400" size={20} />}
+                      <div className="bg-black/20 border border-white/5 rounded-xl p-4 flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${phase === 2 ? 'bg-white/5' : 'bg-emerald-500/10'}`}>
+                          {phase === 2 ? <VolumeX className="text-white/40" size={18} /> : <Volume2 className="text-emerald-400" size={18} />}
                         </div>
                         <div>
-                          <div className="text-[11px] text-white/40 mb-0.5 uppercase tracking-wider">音响系统</div>
-                          <div className="text-sm font-medium text-white">{state.tv.audio}</div>
+                          <div className="text-[10px] text-white/40 mb-0.5 uppercase tracking-wider">音响系统</div>
+                          <div className="text-xs font-medium text-white">{state.tv.audio}</div>
                         </div>
                       </div>
-                      <div className="bg-black/20 border border-white/5 rounded-2xl p-5 flex items-center gap-4">
-                        <div className="p-2.5 bg-rose-500/10 rounded-xl"><Lightbulb className="text-rose-400" size={20} /></div>
+                      <div className="bg-black/20 border border-white/5 rounded-xl p-4 flex items-center gap-3">
+                        <div className="p-2 bg-rose-500/10 rounded-lg"><Lightbulb className="text-rose-400" size={18} /></div>
                         <div>
-                          <div className="text-[11px] text-white/40 mb-0.5 uppercase tracking-wider">背光氛围灯</div>
-                          <div className="text-sm font-medium text-white">{state.tv.ambient_light}</div>
+                          <div className="text-[10px] text-white/40 mb-0.5 uppercase tracking-wider">背光氛围灯</div>
+                          <div className="text-xs font-medium text-white">{state.tv.ambient_light}</div>
                         </div>
                       </div>
                     </motion.div>
@@ -613,7 +623,7 @@ export default function App() {
           </div>
         </main>
 
-        <footer className="text-center p-6 text-sm text-white/30 font-medium tracking-widest">
+        <footer className="text-center p-4 text-[10px] text-white/30 font-medium tracking-widest flex-shrink-0">
           ZERO-UI ARCHITECTURE · COMMERCIAL DEMO
         </footer>
       </div>
