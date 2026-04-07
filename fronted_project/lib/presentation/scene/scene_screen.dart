@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../application/scene_provider.dart';
+import '../../models/scene.dart';
 
 // 模拟的全局状态 Provider，用于切换是否展示骨架屏
 final sceneLoadingProvider = StateProvider<bool>((ref) => false);
+
+IconData _getIconData(String iconName) {
+  switch (iconName) {
+    case 'nights_stay': return Icons.nights_stay;
+    case 'wb_sunny': return Icons.wb_sunny;
+    case 'menu_book': return Icons.menu_book;
+    case 'spa': return Icons.spa;
+    case 'bedtime': return Icons.bedtime;
+    default: return Icons.auto_awesome;
+  }
+}
 
 class SceneScreen extends ConsumerStatefulWidget {
   const SceneScreen({Key? key}) : super(key: key);
@@ -32,16 +45,16 @@ class _SceneScreenState extends ConsumerState<SceneScreen> with SingleTickerProv
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
-        title: Text('场景空间', style: TextStyle(color: colorScheme.onSurface, fontWeight: FontWeight.bold)),
+        title: const Text('场景空间', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: Colors.transparent,
         elevation: 0,
         bottom: TabBar(
           controller: _tabController,
-          labelColor: colorScheme.primary,
-          unselectedLabelColor: colorScheme.onSurfaceVariant,
-          indicatorColor: colorScheme.primary,
+          labelColor: Colors.indigoAccent,
+          unselectedLabelColor: Colors.white54,
+          indicatorColor: Colors.indigoAccent,
           tabs: const [
             Tab(text: '预设'),
             Tab(text: '我的'),
@@ -51,7 +64,7 @@ class _SceneScreenState extends ConsumerState<SceneScreen> with SingleTickerProv
         actions: [
           Switch(
             value: isLoading,
-            activeColor: colorScheme.primary,
+            activeColor: Colors.indigoAccent,
             onChanged: (val) => ref.read(sceneLoadingProvider.notifier).state = val,
           )
         ],
@@ -62,8 +75,8 @@ class _SceneScreenState extends ConsumerState<SceneScreen> with SingleTickerProv
               controller: _tabController,
               children: [
                 const _PresetScenesList(),
-                const Center(child: Text('我的场景空空如也')),
-                const Center(child: Text('暂无收藏场景')),
+                const Center(child: Text('我的场景空空如也', style: TextStyle(color: Colors.white54))),
+                const Center(child: Text('暂无收藏场景', style: TextStyle(color: Colors.white54))),
               ],
             ),
     );
@@ -115,19 +128,13 @@ class _SceneListSkeleton extends StatelessWidget {
   }
 }
 
-class _PresetScenesList extends StatelessWidget {
+class _PresetScenesList extends ConsumerWidget {
   const _PresetScenesList();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
-    final scenes = [
-      {'name': '睡前', 'status': 'Active', 'icon': Icons.bedtime},
-      {'name': '夜起', 'status': 'Inactive', 'icon': Icons.nights_stay},
-      {'name': '晨起', 'status': 'Inactive', 'icon': Icons.wb_sunny},
-      {'name': '阅读', 'status': 'Inactive', 'icon': Icons.menu_book},
-      {'name': '放松', 'status': 'Inactive', 'icon': Icons.spa},
-    ];
+    final scenes = ref.watch(sceneProvider).where((s) => s.isPreset).toList();
 
     return ListView.separated(
       padding: const EdgeInsets.all(16.0),
@@ -135,26 +142,27 @@ class _PresetScenesList extends StatelessWidget {
       separatorBuilder: (context, index) => const SizedBox(height: 16),
       itemBuilder: (context, index) {
         final scene = scenes[index];
-        final isActive = scene['status'] == 'Active';
+        final isActive = scene.isActive;
 
         return GestureDetector(
           onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => SceneDetailScreen(sceneName: scene['name'] as String),
-              ),
-            );
+            ref.read(sceneProvider.notifier).toggleScene(scene.id);
           },
-          child: Card(
-            elevation: isActive ? 2 : 0,
-            color: isActive ? colorScheme.primaryContainer : colorScheme.surfaceContainerLow,
-            shape: RoundedRectangleBorder(
+          child: Container(
+            decoration: BoxDecoration(
+              color: isActive ? Colors.indigoAccent.withOpacity(0.15) : Colors.white.withOpacity(0.05),
               borderRadius: BorderRadius.circular(24),
-              side: BorderSide(
-                color: isActive ? colorScheme.primary.withOpacity(0.5) : Colors.transparent,
+              border: Border.all(
+                color: isActive ? Colors.indigoAccent.withOpacity(0.5) : Colors.white.withOpacity(0.05),
                 width: 1,
               ),
+              boxShadow: isActive ? [
+                BoxShadow(
+                  color: Colors.indigoAccent.withOpacity(0.2),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                )
+              ] : [],
             ),
             child: Padding(
               padding: const EdgeInsets.all(20.0),
@@ -163,12 +171,12 @@ class _PresetScenesList extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: isActive ? colorScheme.primary.withOpacity(0.2) : colorScheme.surfaceContainerHighest,
+                      color: isActive ? Colors.indigoAccent.withOpacity(0.2) : Colors.white.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      scene['icon'] as IconData,
-                      color: isActive ? colorScheme.primary : colorScheme.onSurfaceVariant,
+                      _getIconData(scene.icon),
+                      color: isActive ? Colors.indigoAccent : Colors.white54,
                       size: 28,
                     ),
                   ),
@@ -178,18 +186,18 @@ class _PresetScenesList extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          scene['name'] as String,
+                          scene.name,
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: isActive ? colorScheme.onPrimaryContainer : colorScheme.onSurface,
+                            color: isActive ? Colors.white : Colors.white70,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           isActive ? '运行中' : '点击激活',
                           style: TextStyle(
-                            color: isActive ? colorScheme.onPrimaryContainer.withOpacity(0.8) : colorScheme.onSurfaceVariant,
+                            color: isActive ? Colors.indigoAccent.withOpacity(0.8) : Colors.white54,
                             fontSize: 14,
                           ),
                         )
@@ -197,9 +205,9 @@ class _PresetScenesList extends StatelessWidget {
                     ),
                   ),
                   if (isActive)
-                    Icon(Icons.check_circle, color: colorScheme.primary)
+                    const Icon(Icons.check_circle, color: Colors.indigoAccent)
                   else
-                    Icon(Icons.play_circle_outline, color: colorScheme.onSurfaceVariant),
+                    const Icon(Icons.play_circle_outline, color: Colors.white54),
                 ],
               ),
             ),

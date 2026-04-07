@@ -4,14 +4,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:on_device_agent/on_device_agent.dart';
 import '../../models/device.dart';
+import '../../models/automation.dart';
 import '../../services/device_service.dart';
 import '../../services/virtual_device_service.dart';
 import '../../theme/figma_colors.dart';
 import '../../features/agent/fallback_intent_service.dart';
 import '../../application/application.dart';
+import '../../application/automation_provider.dart';
 import '../widgets/widgets.dart';
 import '../pages/pages.dart';
 import '../../main.dart'; // for global variables if needed
+
+IconData _getIconData(String iconName) {
+  switch (iconName) {
+    case 'nights_stay': return Icons.nights_stay;
+    case 'wb_sunny': return Icons.wb_sunny;
+    case 'wb_twilight': return Icons.wb_twilight;
+    case 'sensor_door': return Icons.sensor_door;
+    case 'bedtime': return Icons.bedtime;
+    default: return Icons.auto_awesome;
+  }
+}
 
 class AutomationsPage extends ConsumerWidget {
   const AutomationsPage({super.key});
@@ -19,66 +32,79 @@ class AutomationsPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
+    final automations = ref.watch(automationProvider);
 
-    final recommendedAutomations = [
-      {'title': '检测到入睡，自动关闭所有灯光', 'description': '基于生理作息识别', 'icon': Icons.nights_stay},
-      {'title': '早晨光线唤醒', 'description': '根据作息基线推荐', 'icon': Icons.wb_sunny},
-    ];
+    final recommendedAutomations = automations.where((a) => a.isRecommended).toList();
+    final enabledAutomations = automations.where((a) => !a.isRecommended).toList();
 
-    final enabledAutomations = [
-      {'title': '日落时开启客厅灯', 'status': 'success', 'lastRun': '18:30', 'icon': Icons.wb_twilight},
-      {'title': '离家后关闭所有设备', 'status': 'fail', 'lastRun': '08:15', 'error': '网关离线', 'icon': Icons.sensor_door},
-      {'title': '22:30 进入睡眠模式', 'status': 'success', 'lastRun': '昨晚 22:30', 'icon': Icons.bedtime},
-    ];
-
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        Text(
-          'AI 推荐自动化',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: colorScheme.primary,
+    return Scaffold(
+      backgroundColor: Colors.transparent,
+      appBar: AppBar(
+        title: const Text('自动化', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        physics: const BouncingScrollPhysics(),
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.auto_awesome, color: Colors.indigoAccent, size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                'AI 推荐自动化',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 16),
-        ...recommendedAutomations.map((a) => _buildRecommendationCard(a, colorScheme)),
-        const SizedBox(height: 32),
-        Text(
-          '已启用自动化',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: colorScheme.onSurface,
+          const SizedBox(height: 16),
+          ...recommendedAutomations.map((a) => _buildRecommendationCard(a, colorScheme, ref)),
+          const SizedBox(height: 32),
+          Row(
+            children: [
+              const Icon(Icons.bolt, color: Colors.amberAccent, size: 20),
+              const SizedBox(width: 8),
+              const Text(
+                '已启用自动化',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(height: 16),
-        ...enabledAutomations.map((a) => _buildEnabledCard(a, colorScheme)),
-      ],
+          const SizedBox(height: 16),
+          ...enabledAutomations.map((a) => _buildEnabledCard(a, colorScheme, ref)),
+        ],
+      ),
     );
   }
 
-  Widget _buildRecommendationCard(Map<String, dynamic> data, ColorScheme colorScheme) {
-    return Card(
-      elevation: 0,
+  Widget _buildRecommendationCard(SmartAutomation data, ColorScheme colorScheme, WidgetRef ref) {
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      color: colorScheme.primaryContainer.withOpacity(0.5),
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
+        color: Colors.indigo.withOpacity(0.1),
         borderRadius: BorderRadius.circular(24),
-        side: BorderSide(color: colorScheme.primary.withOpacity(0.2), width: 1),
+        border: Border.all(color: Colors.indigoAccent.withOpacity(0.3), width: 1),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: colorScheme.primary.withOpacity(0.2),
+                color: Colors.indigoAccent.withOpacity(0.2),
                 shape: BoxShape.circle,
               ),
-              child: Icon(data['icon'] as IconData, color: colorScheme.primary),
+              child: Icon(_getIconData(data.icon), color: Colors.indigoAccent),
             ),
             const SizedBox(width: 16),
             Expanded(
@@ -86,18 +112,18 @@ class AutomationsPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    data['title'] as String,
-                    style: TextStyle(
-                      color: colorScheme.onPrimaryContainer,
+                    data.title,
+                    style: const TextStyle(
+                      color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    data['description'] as String,
-                    style: TextStyle(
-                      color: colorScheme.onPrimaryContainer.withOpacity(0.8),
+                    data.description,
+                    style: const TextStyle(
+                      color: Colors.white70,
                       fontSize: 13,
                     ),
                   ),
@@ -106,10 +132,12 @@ class AutomationsPage extends ConsumerWidget {
             ),
             const SizedBox(width: 8),
             ElevatedButton(
-              onPressed: () {},
+              onPressed: () {
+                ref.read(automationProvider.notifier).acceptRecommendation(data.id);
+              },
               style: ElevatedButton.styleFrom(
-                backgroundColor: colorScheme.primary,
-                foregroundColor: colorScheme.onPrimary,
+                backgroundColor: Colors.indigoAccent,
+                foregroundColor: Colors.white,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(20),
                 ),
@@ -122,33 +150,32 @@ class AutomationsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildEnabledCard(Map<String, dynamic> data, ColorScheme colorScheme) {
-    final isFail = data['status'] == 'fail';
+  Widget _buildEnabledCard(SmartAutomation data, ColorScheme colorScheme, WidgetRef ref) {
+    final isFail = data.error != null;
 
-    return Card(
-      elevation: 0,
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      color: isFail ? colorScheme.errorContainer.withOpacity(0.5) : colorScheme.surfaceContainerLow,
-      shape: RoundedRectangleBorder(
+      decoration: BoxDecoration(
+        color: isFail ? Colors.redAccent.withOpacity(0.05) : Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(24),
-        side: BorderSide(
-          color: isFail ? colorScheme.error.withOpacity(0.5) : Colors.transparent,
+        border: Border.all(
+          color: isFail ? Colors.redAccent.withOpacity(0.3) : Colors.white.withOpacity(0.05),
           width: 1,
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(20),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isFail ? colorScheme.error.withOpacity(0.2) : colorScheme.surfaceContainerHighest,
+                color: isFail ? Colors.redAccent.withOpacity(0.2) : Colors.white.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                data['icon'] as IconData,
-                color: isFail ? colorScheme.error : colorScheme.onSurfaceVariant,
+                _getIconData(data.icon),
+                color: isFail ? Colors.redAccent : Colors.white70,
               ),
             ),
             const SizedBox(width: 16),
@@ -157,9 +184,9 @@ class AutomationsPage extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    data['title'] as String,
+                    data.title,
                     style: TextStyle(
-                      color: isFail ? colorScheme.onErrorContainer : colorScheme.onSurface,
+                      color: isFail ? Colors.redAccent : Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -170,13 +197,13 @@ class AutomationsPage extends ConsumerWidget {
                       Icon(
                         isFail ? Icons.error_outline : Icons.check_circle_outline,
                         size: 14,
-                        color: isFail ? colorScheme.error : colorScheme.onSurfaceVariant,
+                        color: isFail ? Colors.redAccent : Colors.white54,
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        isFail ? '执行失败 (${data['error']})' : '上次执行: ${data['lastRun']}',
+                        isFail ? '执行失败 (${data.error})' : '上次执行: ${data.lastRun}',
                         style: TextStyle(
-                          color: isFail ? colorScheme.error : colorScheme.onSurfaceVariant,
+                          color: isFail ? Colors.redAccent : Colors.white54,
                           fontSize: 13,
                         ),
                       ),
@@ -186,9 +213,11 @@ class AutomationsPage extends ConsumerWidget {
               ),
             ),
             Switch(
-              value: true,
-              activeColor: colorScheme.primary,
-              onChanged: (val) {},
+              value: data.isEnabled,
+              activeColor: Colors.amberAccent,
+              onChanged: (val) {
+                ref.read(automationProvider.notifier).toggleAutomation(data.id);
+              },
             ),
           ],
         ),

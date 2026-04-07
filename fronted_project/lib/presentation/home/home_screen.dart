@@ -11,7 +11,7 @@ class HomeScreen extends ConsumerWidget {
     final homeSummaryAsync = ref.watch(homeSummaryProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F7),
+      backgroundColor: const Color(0xFF14142B), // Match Scaffold background
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(homeSummaryProvider);
@@ -20,7 +20,7 @@ class HomeScreen extends ConsumerWidget {
           } catch (_) {}
         },
         child: homeSummaryAsync.when(
-          data: (data) => const HomePage(), // 加载成功后显示漂亮的 UI
+          data: (data) => HomePage(homeData: data), // Pass data
           loading: () => const _HomeSkeleton(),
           error: (error, stackTrace) => ListView(
             children: [
@@ -32,11 +32,11 @@ class HomeScreen extends ConsumerWidget {
                     children: [
                       const Icon(Icons.error_outline, size: 48, color: Colors.redAccent),
                       const SizedBox(height: 16),
-                      Text('加载失败', style: Theme.of(context).textTheme.titleLarge),
+                      Text('加载失败', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.white)),
                       const SizedBox(height: 8),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 32.0),
-                        child: Text(error.toString(), textAlign: TextAlign.center, style: const TextStyle(color: Colors.black54)),
+                        child: Text(error.toString(), textAlign: TextAlign.center, style: const TextStyle(color: Colors.white54)),
                       ),
                       const SizedBox(height: 24),
                       ElevatedButton(

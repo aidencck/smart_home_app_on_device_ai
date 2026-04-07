@@ -25,6 +25,25 @@ class SmartHomeApp extends ConsumerWidget {
 
     return MaterialApp(
       title: 'Smart Home',
+      themeMode: ThemeMode.dark, // 强制深色模式
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF5D5FEF), // 深邃的紫蓝色调 (Indigo)
+          brightness: Brightness.dark,
+          surface: const Color(0xFF1A1A2E), // 主背景深蓝
+          surfaceContainer: const Color(0xFF252542), // 卡片颜色
+          surfaceContainerHighest: const Color(0xFF2E2E50),
+          primary: const Color(0xFF5D5FEF), // 强调色
+          onPrimary: Colors.white,
+        ),
+        scaffoldBackgroundColor: const Color(0xFF14142B), // Scaffold 极致深邃
+        useMaterial3: true,
+        appBarTheme: const AppBarTheme(
+          centerTitle: false,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+        ),
+      ),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: FigmaColors.primaryBlue,

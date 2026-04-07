@@ -78,7 +78,7 @@ class AiRecommendationScreen extends ConsumerWidget {
     final colorScheme = Theme.of(context).colorScheme;
 
     return Scaffold(
-      backgroundColor: colorScheme.surface,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -90,15 +90,28 @@ class AiRecommendationScreen extends ConsumerWidget {
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          _buildInsightsCard(colorScheme),
-          const SizedBox(height: 24),
-          _buildBaselineCard(colorScheme),
-          const SizedBox(height: 24),
-          _buildRecommendationSection(context, ref, colorScheme),
-        ],
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              const Color(0xFF0F172A), // slate-900
+              const Color(0xFF1E1B4B), // indigo-950
+              const Color(0xFF000000), // black
+            ],
+          ),
+        ),
+        child: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            _buildInsightsCard(colorScheme),
+            const SizedBox(height: 24),
+            _buildBaselineCard(colorScheme),
+            const SizedBox(height: 24),
+            _buildRecommendationSection(context, ref, colorScheme),
+          ],
+        ),
       ),
     );
   }
@@ -116,24 +129,30 @@ class AiRecommendationScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Card(
-          elevation: 0,
-          color: colorScheme.secondaryContainer.withOpacity(0.5),
-          shape: RoundedRectangleBorder(
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
             borderRadius: BorderRadius.circular(24),
-            side: BorderSide(color: colorScheme.secondary.withOpacity(0.2)),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Padding(
             padding: const EdgeInsets.all(20),
             child: Row(
               children: [
-                Icon(Icons.insights, size: 32, color: colorScheme.secondary),
+                Icon(Icons.insights, size: 32, color: colorScheme.primary),
                 const SizedBox(width: 16),
                 Expanded(
                   child: Text(
                     '您昨晚比平时晚睡了 45 分钟，且起夜 2 次。建议今晚提早 30 分钟开启睡眠环境，并将灯光调暗。',
                     style: TextStyle(
-                      color: colorScheme.onSecondaryContainer,
+                      color: Colors.white.withOpacity(0.9),
                       height: 1.5,
                     ),
                   ),
@@ -159,11 +178,18 @@ class AiRecommendationScreen extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: 12),
-        Card(
-          elevation: 0,
-          color: colorScheme.surfaceContainerLow,
-          shape: RoundedRectangleBorder(
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
             borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.1)),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.2),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Padding(
             padding: const EdgeInsets.all(20),
@@ -175,14 +201,14 @@ class AiRecommendationScreen extends ConsumerWidget {
                   Icons.bedtime,
                   colorScheme,
                 ),
-                const Divider(height: 32),
+                Divider(height: 32, color: Colors.white.withOpacity(0.1)),
                 _buildBaselineRow(
                   '晨起时间',
                   '07:00 - 07:30',
                   Icons.wb_sunny,
                   colorScheme,
                 ),
-                const Divider(height: 32),
+                Divider(height: 32, color: Colors.white.withOpacity(0.1)),
                 _buildBaselineRow('午休习惯', '无', Icons.wb_twilight, colorScheme),
               ],
             ),
@@ -203,7 +229,7 @@ class AiRecommendationScreen extends ConsumerWidget {
         Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: colorScheme.primary.withOpacity(0.1),
+            color: colorScheme.primary.withOpacity(0.2),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: colorScheme.primary, size: 20),
@@ -211,13 +237,13 @@ class AiRecommendationScreen extends ConsumerWidget {
         const SizedBox(width: 16),
         Text(
           title,
-          style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 16),
+          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 16),
         ),
         const Spacer(),
         Text(
           value,
           style: TextStyle(
-            color: colorScheme.onSurface,
+            color: Colors.white,
             fontWeight: FontWeight.bold,
             fontSize: 16,
           ),
@@ -248,7 +274,7 @@ class AiRecommendationScreen extends ConsumerWidget {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.refresh),
+              icon: const Icon(Icons.refresh, color: Colors.white70),
               onPressed: () => ref.invalidate(aiRecommendationsProvider),
               tooltip: '刷新',
             ),
@@ -258,15 +284,20 @@ class AiRecommendationScreen extends ConsumerWidget {
         asyncRecommendations.when(
           data: (recommendations) {
             if (recommendations.isEmpty) {
-              return Card(
-                elevation: 0,
-                color: colorScheme.surfaceContainerHighest,
-                shape: RoundedRectangleBorder(
+              return Container(
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.05),
                   borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: Colors.white.withOpacity(0.1)),
                 ),
-                child: const Padding(
-                  padding: EdgeInsets.all(20),
-                  child: Center(child: Text('暂无推荐建议')),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Center(
+                    child: Text(
+                      '暂无推荐建议',
+                      style: TextStyle(color: Colors.white.withOpacity(0.7)),
+                    ),
+                  ),
                 ),
               );
             }
@@ -288,7 +319,10 @@ class AiRecommendationScreen extends ConsumerWidget {
           error: (error, stack) => Center(
             child: Padding(
               padding: const EdgeInsets.all(20.0),
-              child: Text('加载失败: $error'),
+              child: Text(
+                '加载失败: $error',
+                style: const TextStyle(color: Colors.redAccent),
+              ),
             ),
           ),
         ),
@@ -308,15 +342,20 @@ class AiRecommendationScreen extends ConsumerWidget {
     if (isIgnored) {
       return Padding(
         padding: const EdgeInsets.only(bottom: 12.0),
-        child: Card(
-          elevation: 0,
-          color: colorScheme.surfaceContainerHighest,
-          shape: RoundedRectangleBorder(
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.02),
             borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: Colors.white.withOpacity(0.05)),
           ),
-          child: const Padding(
-            padding: EdgeInsets.all(20),
-            child: Center(child: Text('已忽略当前建议')),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Center(
+              child: Text(
+                '已忽略当前建议',
+                style: TextStyle(color: Colors.white.withOpacity(0.5)),
+              ),
+            ),
           ),
         ),
       );
@@ -328,18 +367,26 @@ class AiRecommendationScreen extends ConsumerWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),
-      child: Card(
-        elevation: isAccepted ? 2 : 0,
-        color: isAccepted
-            ? colorScheme.primaryContainer
-            : colorScheme.surfaceContainerLow,
-        shape: RoundedRectangleBorder(
+      child: Container(
+        decoration: BoxDecoration(
+          color: isAccepted
+              ? colorScheme.primary.withOpacity(0.1)
+              : Colors.white.withOpacity(0.05),
           borderRadius: BorderRadius.circular(24),
-          side: BorderSide(
+          border: Border.all(
             color: isAccepted
                 ? colorScheme.primary.withOpacity(0.5)
-                : Colors.transparent,
+                : Colors.white.withOpacity(0.1),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isAccepted
+                  ? colorScheme.primary.withOpacity(0.2)
+                  : Colors.black.withOpacity(0.2),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
         ),
         child: Padding(
           padding: const EdgeInsets.all(20),
@@ -353,14 +400,14 @@ class AiRecommendationScreen extends ConsumerWidget {
                     decoration: BoxDecoration(
                       color: isAccepted
                           ? colorScheme.primary.withOpacity(0.2)
-                          : colorScheme.surfaceContainerHighest,
+                          : Colors.white.withOpacity(0.1),
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
                       Icons.auto_awesome,
                       color: isAccepted
                           ? colorScheme.primary
-                          : colorScheme.onSurfaceVariant,
+                          : Colors.white.withOpacity(0.7),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -373,9 +420,7 @@ class AiRecommendationScreen extends ConsumerWidget {
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: isAccepted
-                                ? colorScheme.onPrimaryContainer
-                                : colorScheme.onSurface,
+                            color: Colors.white,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -383,11 +428,7 @@ class AiRecommendationScreen extends ConsumerWidget {
                           subtitle,
                           style: TextStyle(
                             fontSize: 13,
-                            color: isAccepted
-                                ? colorScheme.onPrimaryContainer.withOpacity(
-                                    0.8,
-                                  )
-                                : colorScheme.onSurfaceVariant,
+                            color: Colors.white.withOpacity(0.7),
                           ),
                         ),
                       ],
@@ -401,9 +442,7 @@ class AiRecommendationScreen extends ConsumerWidget {
               Text(
                 recommendation.description,
                 style: TextStyle(
-                  color: isAccepted
-                      ? colorScheme.onPrimaryContainer
-                      : colorScheme.onSurface,
+                  color: Colors.white.withOpacity(0.9),
                   height: 1.5,
                 ),
               ),
@@ -433,6 +472,8 @@ class AiRecommendationScreen extends ConsumerWidget {
                         },
                         style: OutlinedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          side: BorderSide(color: Colors.white.withOpacity(0.3)),
+                          foregroundColor: Colors.white,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -457,17 +498,19 @@ class AiRecommendationScreen extends ConsumerWidget {
                             if (context.mounted) {
                               ScaffoldMessenger.of(
                                 context,
-                              ).showSnackBar(SnackBar(content: Text('采纳失败')));
+                              ).showSnackBar(const SnackBar(content: Text('采纳失败')));
                             }
                           }
                         },
                         style: FilledButton.styleFrom(
                           padding: const EdgeInsets.symmetric(vertical: 16),
+                          backgroundColor: colorScheme.primary,
+                          foregroundColor: Colors.black,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: const Text('采纳'),
+                        child: const Text('采纳', style: TextStyle(fontWeight: FontWeight.bold)),
                       ),
                     ),
                   ],
