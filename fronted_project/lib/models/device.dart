@@ -23,6 +23,12 @@ mixin HasTemperature on SmartDevice {
 mixin HasBrightness on SmartDevice {
   double get brightness => (properties['brightness'] as num?)?.toDouble() ?? 0.8;
   set brightness(double value) => properties['brightness'] = value;
+
+  int get colorTemperature => (properties['color_temp'] as num?)?.toInt() ?? 2700;
+  set colorTemperature(int value) => properties['color_temp'] = value;
+
+  bool get sunriseEnabled => properties['sunrise_enabled'] == true;
+  set sunriseEnabled(bool value) => properties['sunrise_enabled'] = value;
 }
 
 mixin HasBedControl on SmartDevice {
@@ -34,6 +40,12 @@ mixin HasBedControl on SmartDevice {
 
   bool get isLocked => properties['is_locked'] == true;
   set isLocked(bool value) => properties['is_locked'] = value;
+
+  bool get isOccupied => properties['is_occupied'] == true;
+  set isOccupied(bool value) => properties['is_occupied'] = value;
+
+  int get heatingTemperature => (properties['heating_temp'] as num?)?.toInt() ?? 0;
+  set heatingTemperature(int value) => properties['heating_temp'] = value;
 }
 
 mixin HasSleepTracking on SmartDevice {
@@ -45,6 +57,15 @@ mixin HasSleepTracking on SmartDevice {
 
   int get batteryLevel => (properties['battery_level'] as num?)?.toInt() ?? 85;
   set batteryLevel(int value) => properties['battery_level'] = value;
+
+  int get hrv => (properties['hrv'] as num?)?.toInt() ?? 45;
+  set hrv(int value) => properties['hrv'] = value;
+
+  int get spo2 => (properties['spo2'] as num?)?.toInt() ?? 98;
+  set spo2(int value) => properties['spo2'] = value;
+
+  int get readinessScore => (properties['readiness_score'] as num?)?.toInt() ?? 80;
+  set readinessScore(int value) => properties['readiness_score'] = value;
 }
 
 // --- Security ---
@@ -67,8 +88,14 @@ abstract class SmartDevice {
     required this.room,
     required this.type,
     bool isOn = false,
+    Map<String, dynamic>? properties,
   }) {
-    this.isOn = isOn;
+    if (properties != null) {
+      this.properties.addAll(properties);
+    }
+    if (!this.properties.containsKey('power_state')) {
+      this.isOn = isOn;
+    }
   }
 
   IconData get icon;
@@ -281,11 +308,16 @@ class SmartRingDevice extends SmartDevice with HasSleepTracking {
     required super.name,
     required super.room,
     super.isOn = true,
+    super.properties,
     String sleepStage = 'AWAKE',
     int heartRate = 70,
   }) : super(type: DeviceType.ring) {
-    this.sleepStage = sleepStage;
-    this.heartRate = heartRate;
+    if (!this.properties.containsKey('sleep_stage')) {
+      this.sleepStage = sleepStage;
+    }
+    if (!this.properties.containsKey('heart_rate')) {
+      this.heartRate = heartRate;
+    }
   }
 
   @override
@@ -310,13 +342,20 @@ class SmartBedDevice extends SmartDevice with HasBedControl {
     required super.name,
     required super.room,
     super.isOn = true,
+    super.properties,
     double headHeight = 0.0,
     double footHeight = 0.0,
     bool isLocked = false,
   }) : super(type: DeviceType.bed) {
-    this.headHeight = headHeight;
-    this.footHeight = footHeight;
-    this.isLocked = isLocked;
+    if (!this.properties.containsKey('headHeight')) {
+      this.headHeight = headHeight;
+    }
+    if (!this.properties.containsKey('footHeight')) {
+      this.footHeight = footHeight;
+    }
+    if (!this.properties.containsKey('is_locked')) {
+      this.isLocked = isLocked;
+    }
   }
 
   @override

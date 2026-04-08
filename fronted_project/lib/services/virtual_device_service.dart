@@ -31,8 +31,18 @@ class VirtualDeviceService implements DeviceService {
         VacuumDevice(id: 'robot_1', name: '扫地机器人', room: '客厅', isOn: false),
         TvDevice(id: 'tv_1', name: '电视', room: '卧室', isOn: true),
         CurtainDevice(id: 'curtain_1', name: '客厅窗帘', room: '客厅', isOn: false),
-        SmartRingDevice(id: 'ring_1', name: '智能戒指', room: '卧室', sleepStage: 'AWAKE'),
-        SmartBedDevice(id: 'bed_1', name: '智能床', room: '卧室', headHeight: 0.0, footHeight: 0.0),
+        SmartRingDevice(id: 'ring_1', name: '智能戒指', room: '卧室', sleepStage: 'AWAKE', properties: {
+          'heart_rate': 72,
+          'readiness_score': 85,
+          'hrv': 48,
+          'spo2': 98,
+          'battery_level': 92,
+        }),
+        SmartBedDevice(id: 'bed_1', name: '智能床', room: '卧室', headHeight: 0.0, footHeight: 0.0, properties: {
+          'is_locked': false,
+          'is_occupied': true,
+          'heating_temp': 37,
+        }),
       ]);
     }
   }

@@ -1,8 +1,8 @@
 {
-    "adapter_path": "../exports/adapters",
+    "adapter_path": "/Users/aiden/Projects/macinit/smart_home_projects/model_forge/training/scripts/../exports/adapters",
     "batch_size": 4,
     "config": null,
-    "data": "../data/processed",
+    "data": "/Users/aiden/Projects/macinit/smart_home_projects/model_forge/training/scripts/../data/processed",
     "fine_tune_type": "lora",
     "grad_accumulation_steps": 1,
     "grad_checkpoint": false,

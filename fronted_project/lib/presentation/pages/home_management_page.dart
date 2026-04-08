@@ -44,6 +44,7 @@ class _HomeManagementPageState extends ConsumerState<HomeManagementPage> {
     {'name': '主卧', 'deviceCount': 1, 'icon': Icons.bed_outlined},
     {'name': '书房', 'deviceCount': 1, 'icon': Icons.desktop_mac_outlined},
     {'name': '大门', 'deviceCount': 1, 'icon': Icons.door_front_door_outlined},
+    {'name': '卫生间', 'deviceCount': 2, 'icon': Icons.bathtub_outlined},
   ];
 
   @override
@@ -213,43 +214,54 @@ class _HomeManagementPageState extends ConsumerState<HomeManagementPage> {
             itemCount: _rooms.length,
             itemBuilder: (context, index) {
               final r = _rooms[index];
-              return Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainer,
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Icon(
-                      r['icon'] as IconData,
-                      color: Colors.blueAccent,
-                      size: 28,
+              return InkWell(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DevicesPage(initialRoom: r['name'] as String),
                     ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          r['name'] as String,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                  );
+                },
+                borderRadius: BorderRadius.circular(16),
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.surfaceContainer,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Icon(
+                        r['icon'] as IconData,
+                        color: Colors.blueAccent,
+                        size: 28,
+                      ),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            r['name'] as String,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
-                        Text(
-                          '${r['deviceCount']} 个设备',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Theme.of(
-                              context,
-                            ).colorScheme.onSurfaceVariant,
+                          Text(
+                            '${r['deviceCount']} 个设备',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(
+                                context,
+                              ).colorScheme.onSurfaceVariant,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ],
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

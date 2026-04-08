@@ -11,18 +11,26 @@ import '../../application/application.dart';
 import '../../application/providers.dart';
 import '../widgets/widgets.dart';
 import '../pages/pages.dart';
+import 'device_details/device_detail_page.dart';
 import '../../main.dart'; // for global variables if needed
 
 class DevicesPage extends ConsumerStatefulWidget {
-  const DevicesPage({super.key});
+  final String initialRoom;
+  const DevicesPage({super.key, this.initialRoom = '全部'});
 
   @override
   ConsumerState<DevicesPage> createState() => _DevicesPageState();
 }
 
 class _DevicesPageState extends ConsumerState<DevicesPage> {
-  String _selectedRoom = '全部';
+  late String _selectedRoom;
   final List<String> _rooms = ['全部', '主卧', '客厅', '厨房', '卫生间'];
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedRoom = widget.initialRoom;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,6 +90,23 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
                   return const Center(child: CircularProgressIndicator(color: Colors.indigoAccent));
                 }
                 
+                final filteredDevices = _selectedRoom == '全部'
+                    ? deviceManager.devices
+                    : deviceManager.devices.where((d) => d.room == _selectedRoom).toList();
+
+                if (filteredDevices.isEmpty) {
+                  return Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.devices_other, size: 64, color: Colors.white.withOpacity(0.1)),
+                        const SizedBox(height: 16),
+                        Text('该房间暂无设备', style: TextStyle(color: Colors.white.withOpacity(0.3))),
+                      ],
+                    ),
+                  );
+                }
+                
                 return GridView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   physics: const BouncingScrollPhysics(),
@@ -91,18 +116,25 @@ class _DevicesPageState extends ConsumerState<DevicesPage> {
                     mainAxisSpacing: 16,
                     childAspectRatio: 1.0,
                   ),
-                  itemCount: deviceManager.devices.length,
+                  itemCount: filteredDevices.length,
                   itemBuilder: (context, i) {
-                    final d = deviceManager.devices[i];
+                    final d = filteredDevices[i];
                     return DeviceCard(
                       device: d,
-                      onTap: () => ref.read(deviceManagerProvider).toggleDevice(d.id),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DeviceDetailPage(deviceId: d.id),
+                          ),
+                        );
+                      },
                       onMoreTap: () {
-                        showModalBottomSheet(
-                          context: context,
-                          isScrollControlled: true,
-                          backgroundColor: Colors.transparent,
-                          builder: (context) => DeviceDetailSheet(deviceId: d.id),
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DeviceDetailPage(deviceId: d.id),
+                          ),
                         );
                       },
                     );

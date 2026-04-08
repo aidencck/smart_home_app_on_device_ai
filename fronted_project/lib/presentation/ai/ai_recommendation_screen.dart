@@ -4,6 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/ai_recommendation.dart';
 import '../../services/ai_recommendation_service.dart';
 import '../../application/auth/auth_provider.dart';
+import '../../application/providers.dart';
+import '../../application/system_state_machine.dart';
+import '../widgets/skeleton_card.dart';
 
 // --- Providers ---
 final aiRecommendationServiceProvider = Provider<AiRecommendationService>((
@@ -37,11 +40,12 @@ class AiRecommendationsNotifier extends AsyncNotifier<List<AiRecommendation>> {
 
     // 乐观更新 UI 状态
     state = state.whenData((recommendations) {
-      return recommendations.map((r) {
+      return recommendations.map<AiRecommendation>((r) {
         if (r.id == id) {
           return AiRecommendation(
             id: r.id,
             userId: r.userId,
+            title: r.title,
             description: r.description,
             status: 'ignored',
             actionPayload: r.actionPayload,
@@ -76,18 +80,25 @@ class AiRecommendationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final colorScheme = Theme.of(context).colorScheme;
+    final systemState = ref.watch(systemStateMachineProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text(
-          'AI 建议采纳中心',
-          style: TextStyle(
-            color: colorScheme.onSurface,
-            fontWeight: FontWeight.bold,
-          ),
+        title: Row(
+          children: [
+            Text(
+              'AI 建议采纳中心',
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 12),
+            _buildStateBadge(systemState),
+          ],
         ),
       ),
       body: Container(
@@ -310,23 +321,74 @@ class AiRecommendationScreen extends ConsumerWidget {
                   .toList(),
             );
           },
-          loading: () => const Center(
-            child: Padding(
-              padding: EdgeInsets.all(20.0),
-              child: CircularProgressIndicator(),
-            ),
+          loading: () => const Column(
+            children: [
+              SkeletonCard(height: 160),
+              SizedBox(height: 16),
+              SkeletonCard(height: 160),
+            ],
           ),
-          error: (error, stack) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(20.0),
-              child: Text(
-                '加载失败: $error',
-                style: const TextStyle(color: Colors.redAccent),
-              ),
-            ),
-          ),
+          error: (error, stack) => _buildErrorCard(context, ref, error),
         ),
       ],
+    );
+  }
+
+  Widget _buildStateBadge(SystemStateMachine stateMachine) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: stateMachine.stateThemeColor.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: stateMachine.stateThemeColor.withOpacity(0.5)),
+      ),
+      child: Text(
+        stateMachine.stateName,
+        style: TextStyle(
+          color: stateMachine.stateThemeColor,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorCard(BuildContext context, WidgetRef ref, Object error) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.redAccent.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.redAccent.withOpacity(0.2)),
+      ),
+      child: Column(
+        children: [
+          const Icon(Icons.error_outline, color: Colors.redAccent, size: 48),
+          const SizedBox(height: 16),
+          const Text(
+            '获取建议失败',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            error.toString(),
+            textAlign: TextAlign.center,
+            style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12),
+          ),
+          const SizedBox(height: 24),
+          ElevatedButton.icon(
+            onPressed: () => ref.invalidate(aiRecommendationsProvider),
+            icon: const Icon(Icons.refresh),
+            label: const Text('重试'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.redAccent,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -361,9 +423,8 @@ class AiRecommendationScreen extends ConsumerWidget {
       );
     }
 
-    final title = recommendation.actionPayload['title'] as String? ?? 'AI 场景推荐';
-    final subtitle =
-        recommendation.actionPayload['subtitle'] as String? ?? '根据您的习惯自动生成';
+    final title = recommendation.title;
+    final subtitle = recommendation.actionPayload['subtitle'] as String? ?? '根据您的习惯自动生成';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12.0),

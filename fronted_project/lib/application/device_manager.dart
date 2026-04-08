@@ -9,14 +9,16 @@ import '../features/agent/fallback_intent_service.dart';
 import '../application/application.dart';
 import '../presentation/widgets/widgets.dart';
 import '../presentation/pages/pages.dart';
+import 'system_state_machine.dart';
 import '../main.dart'; // for global variables if needed
 
 class DeviceManager extends ChangeNotifier {
   final DeviceService _service;
+  final SystemStateMachine _stateMachine;
   List<SmartDevice> _devices = [];
   bool _isInitialized = false;
 
-  DeviceManager(this._service) {
+  DeviceManager(this._service, this._stateMachine) {
     _init();
   }
 

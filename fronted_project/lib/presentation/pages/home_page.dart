@@ -4,6 +4,9 @@ import '../widgets/widgets.dart';
 import '../../application/providers.dart';
 import '../../models/device.dart';
 import 'general_settings_page.dart';
+import 'device_details/device_detail_page.dart';
+
+import '../../application/system_state_machine.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   final Map<String, dynamic>? homeData;
@@ -15,18 +18,17 @@ class HomePage extends ConsumerStatefulWidget {
 }
 
 class _HomePageState extends ConsumerState<HomePage> {
-  String _currentMode = '睡前模式已开启';
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final deviceManager = ref.watch(deviceManagerProvider);
+    final systemState = ref.watch(systemStateMachineProvider);
 
     return CustomScrollView(
       slivers: [
         // 1. 顶部导航区 (Top Navigation)
-        _buildTopNavigation(context, colorScheme),
+        _buildTopNavigation(context, colorScheme, systemState),
 
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -34,7 +36,7 @@ class _HomePageState extends ConsumerState<HomePage> {
             delegate: SliverChildListDelegate([
               const SizedBox(height: 16),
               // 2. 当前状态区 (Current State)
-              _buildCurrentState(theme, colorScheme, deviceManager),
+              _buildCurrentState(theme, colorScheme, deviceManager, systemState),
               const SizedBox(height: 24),
               // 2.1 硬件体征与健康 (Hardware Health - NEW)
               _buildHardwareHealth(theme, colorScheme, deviceManager),
@@ -43,7 +45,7 @@ class _HomePageState extends ConsumerState<HomePage> {
               _buildQuickControl(theme, colorScheme, deviceManager),
               const SizedBox(height: 24),
               // 4. 常用场景区 (Common Scenes)
-              _buildCommonScenes(theme, colorScheme),
+              _buildCommonScenes(theme, colorScheme, systemState),
               const SizedBox(height: 24),
               // 5. AI 推荐区 (AI Recommendations)
               _buildAiRecommendations(theme, colorScheme),
@@ -61,33 +63,36 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildTopNavigation(BuildContext context, ColorScheme colorScheme) {
+  Widget _buildTopNavigation(BuildContext context, ColorScheme colorScheme, SystemStateMachine stateMachine) {
     return SliverAppBar(
       pinned: true,
-      backgroundColor: Colors.transparent, // 改为透明，让其融入 Scaffold 背景
+      backgroundColor: Colors.transparent,
       elevation: 0,
-      title: Row(
-        children: [
-          const Text(
-            '主卧',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-              color: Colors.white, // 深色模式字体
+      title: GestureDetector(
+        onTap: () => _showRoomSwitcher(context),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              '主卧',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
             ),
-          ),
-          const SizedBox(width: 4),
-          Icon(Icons.arrow_drop_down, color: Colors.white.withOpacity(0.7)),
-        ],
+            const SizedBox(width: 4),
+            Icon(Icons.keyboard_arrow_down, color: Colors.white.withOpacity(0.5), size: 20),
+            const SizedBox(width: 8),
+            _buildStateBadge(stateMachine),
+          ],
+        ),
       ),
       actions: [
         IconButton(
-          icon: Badge(
-            backgroundColor: Colors.redAccent,
-            smallSize: 8,
-            child: const Icon(Icons.notifications_none, color: Colors.white70),
-          ),
-          onPressed: () {},
+          icon: const Icon(Icons.psychology_outlined, color: Colors.white70),
+          onPressed: () => _showStateSwitcher(context, stateMachine),
+          tooltip: '模拟生理状态',
         ),
         IconButton(
           icon: const Icon(Icons.settings_outlined, color: Colors.white70),
@@ -103,10 +108,123 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildCurrentState(ThemeData theme, ColorScheme colorScheme, dynamic deviceManager) {
+  Widget _buildStateBadge(SystemStateMachine stateMachine) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: stateMachine.stateThemeColor.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: stateMachine.stateThemeColor.withOpacity(0.5)),
+      ),
+      child: Text(
+        stateMachine.stateName,
+        style: TextStyle(
+          color: stateMachine.stateThemeColor,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  void _showRoomSwitcher(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E3F),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '切换房间',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 24),
+              _buildRoomOption(context, '主卧', Icons.bed, true),
+              _buildRoomOption(context, '客厅', Icons.weekend, false),
+              _buildRoomOption(context, '书房', Icons.menu_book, false),
+              _buildRoomOption(context, '厨房', Icons.kitchen, false),
+              _buildRoomOption(context, '卫生间', Icons.bathtub_outlined, false),
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildRoomOption(BuildContext context, String label, IconData icon, bool isSelected) {
+    return ListTile(
+      leading: Icon(icon, color: isSelected ? Colors.indigoAccent : Colors.white54),
+      title: Text(label, style: TextStyle(color: isSelected ? Colors.white : Colors.white70)),
+      trailing: isSelected ? const Icon(Icons.check_circle, color: Colors.indigoAccent) : null,
+      onTap: () {
+        // In a real app, this would switch the room data
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('已切换至 $label'),
+            duration: const Duration(seconds: 1),
+            behavior: SnackBarBehavior.floating,
+            backgroundColor: Colors.indigoAccent,
+          ),
+        );
+      },
+    );
+  }
+
+  void _showStateSwitcher(BuildContext context, SystemStateMachine stateMachine) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF1E1E3F),
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '模拟生理状态切换',
+                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 24),
+              _buildStateOption(context, stateMachine, SystemState.awake, '清醒', Icons.wb_sunny, Colors.indigoAccent),
+              _buildStateOption(context, stateMachine, SystemState.sleepPrep, '助眠', Icons.bedtime, Colors.orangeAccent),
+              _buildStateOption(context, stateMachine, SystemState.deepSleep, '深睡', Icons.nightlight_round, Colors.deepPurpleAccent),
+              _buildStateOption(context, stateMachine, SystemState.sunrise, '日出', Icons.wb_twilight, Colors.amberAccent),
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildStateOption(BuildContext context, SystemStateMachine stateMachine, SystemState state, String label, IconData icon, Color color) {
+    final isSelected = stateMachine.currentState == state;
+    return ListTile(
+      leading: Icon(icon, color: color),
+      title: Text(label, style: const TextStyle(color: Colors.white)),
+      trailing: isSelected ? Icon(Icons.check_circle, color: color) : null,
+      onTap: () {
+        stateMachine.updateState(state);
+        Navigator.pop(context);
+      },
+    );
+  }
+
+  Widget _buildCurrentState(ThemeData theme, ColorScheme colorScheme, dynamic deviceManager, SystemStateMachine stateMachine) {
     final devicesCount = deviceManager.devices.length;
-    // SmartDevice doesn't have isOnline, let's just show devicesCount for both or assume they are all online if it's a virtual device service
     final onlineCount = devicesCount;
+    final themeColor = stateMachine.stateThemeColor;
     
     // 找到第一个灯光设备展示其状态
     LightDevice? mainLight;
@@ -121,19 +239,42 @@ class _HomePageState extends ConsumerState<HomePage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          '晚上好',
-          style: theme.textTheme.headlineMedium?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: Colors.white,
-          ),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              stateMachine.currentState == SystemState.awake ? '下午好' : '晚上好',
+              style: theme.textTheme.headlineMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: themeColor.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: themeColor.withOpacity(0.3)),
+              ),
+              child: Row(
+                children: [
+                  Icon(Icons.auto_awesome, color: themeColor, size: 14),
+                  const SizedBox(width: 6),
+                  Text(
+                    'AI 决策中',
+                    style: TextStyle(color: themeColor, fontSize: 10, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 12),
         Container(
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            gradient: const LinearGradient(
-              colors: [Color(0xFF2E2E5A), Color(0xFF1E1E3F)],
+            gradient: LinearGradient(
+              colors: [themeColor.withOpacity(0.3), const Color(0xFF1E1E3F)],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -155,14 +296,18 @@ class _HomePageState extends ConsumerState<HomePage> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.indigoAccent.withOpacity(0.2),
+                      color: themeColor.withOpacity(0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(Icons.bedtime, color: Colors.indigoAccent, size: 24),
+                    child: Icon(
+                      stateMachine.currentState == SystemState.awake ? Icons.wb_sunny : Icons.bedtime,
+                      color: themeColor,
+                      size: 24,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    _currentMode,
+                    stateMachine.stateName,
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
@@ -236,27 +381,47 @@ class _HomePageState extends ConsumerState<HomePage> {
           children: [
             if (ring != null)
               Expanded(
-                child: _buildHealthCard(
-                  theme,
-                  colorScheme,
-                  icon: Icons.favorite,
-                  title: '心率',
-                  value: '${ring.heartRate} bpm',
-                  subValue: '状态: ${ring.sleepStage}',
-                  color: Colors.redAccent,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DeviceDetailPage(deviceId: ring.id),
+                      ),
+                    );
+                  },
+                  child: _buildHealthCard(
+                    theme,
+                    colorScheme,
+                    icon: Icons.favorite,
+                    title: '心率',
+                    value: '${ring.heartRate} bpm',
+                    subValue: '状态: ${ring.sleepStage}',
+                    color: Colors.redAccent,
+                  ),
                 ),
               ),
             if (ring != null && bed != null) const SizedBox(width: 12),
             if (bed != null)
               Expanded(
-                child: _buildHealthCard(
-                  theme,
-                  colorScheme,
-                  icon: Icons.bed,
-                  title: '智能床',
-                  value: '${bed.headHeight.toInt()}°',
-                  subValue: bed.isLocked ? '🔒 已锁定' : '🔓 未锁定',
-                  color: Colors.indigoAccent,
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => DeviceDetailPage(deviceId: bed.id),
+                      ),
+                    );
+                  },
+                  child: _buildHealthCard(
+                    theme,
+                    colorScheme,
+                    icon: Icons.bed,
+                    title: '智能床',
+                    value: '${bed.headHeight.toInt()}°',
+                    subValue: bed.isLocked ? '🔒 已锁定' : '🔓 未锁定',
+                    color: Colors.indigoAccent,
+                  ),
                 ),
               ),
           ],
@@ -332,31 +497,38 @@ class _HomePageState extends ConsumerState<HomePage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: Colors.amber.withOpacity(0.15),
-                          borderRadius: BorderRadius.circular(10),
+                  GestureDetector(
+                    onTap: mainLight == null ? null : () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => DeviceDetailPage(deviceId: mainLight!.id),
                         ),
-                        child: const Icon(Icons.lightbulb_outline, color: Colors.amber, size: 20),
-                      ),
-                      const SizedBox(width: 12),
-                      Text(
-                        mainLight?.name ?? '主卧灯光',
-                        style: theme.textTheme.titleMedium?.copyWith(color: Colors.white),
-                      ),
-                    ],
+                      );
+                    },
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Icon(Icons.lightbulb_outline, color: Colors.amber, size: 20),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          mainLight?.name ?? '主卧灯光',
+                          style: theme.textTheme.titleMedium?.copyWith(color: Colors.white),
+                        ),
+                      ],
+                    ),
                   ),
                   Switch(
                     value: mainLight?.isOn ?? false,
                     activeColor: Colors.indigoAccent,
                     onChanged: mainLight == null ? null : (val) {
                       deviceManager.toggleDevice(mainLight!.id);
-                      setState(() {
-                        _currentMode = '手动调整（已熔断）';
-                      });
                     },
                   ),
                 ],
@@ -381,9 +553,6 @@ class _HomePageState extends ConsumerState<HomePage> {
                         max: 100,
                         onChanged: mainLight == null ? null : (val) {
                           deviceManager.setDeviceStateById(mainLight!.id, mainLight.isOn, value: val);
-                          setState(() {
-                            _currentMode = '手动调整（已熔断）';
-                          });
                         },
                       ),
                     ),
@@ -410,9 +579,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                         min: 2700,
                         max: 6500,
                         onChanged: mainLight == null ? null : (val) {
-                          setState(() {
-                            _currentMode = '手动调整（已熔断）';
-                          });
+                          // mock temp
                         },
                       ),
                     ),
@@ -427,13 +594,13 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
-  Widget _buildCommonScenes(ThemeData theme, ColorScheme colorScheme) {
+  Widget _buildCommonScenes(ThemeData theme, ColorScheme colorScheme, SystemStateMachine stateMachine) {
     final scenes = [
-      {'icon': Icons.bedtime, 'label': '睡前'},
-      {'icon': Icons.nightlight_round, 'label': '夜起'},
-      {'icon': Icons.wb_sunny, 'label': '晨起'},
-      {'icon': Icons.menu_book, 'label': '阅读'},
-      {'icon': Icons.movie, 'label': '放松'},
+      {'icon': Icons.bedtime, 'label': '睡前', 'state': SystemState.sleepPrep},
+      {'icon': Icons.nightlight_round, 'label': '夜起', 'state': SystemState.sleepPrep},
+      {'icon': Icons.wb_sunny, 'label': '晨起', 'state': SystemState.sunrise},
+      {'icon': Icons.menu_book, 'label': '阅读', 'state': SystemState.awake},
+      {'icon': Icons.movie, 'label': '放松', 'state': SystemState.awake},
     ];
 
     return Column(
@@ -467,9 +634,7 @@ class _HomePageState extends ConsumerState<HomePage> {
                       child: IconButton(
                         icon: Icon(scene['icon'] as IconData, color: Colors.indigoAccent.withOpacity(0.8)),
                         onPressed: () {
-                          setState(() {
-                            _currentMode = '${scene['label']}模式已开启';
-                          });
+                          stateMachine.updateState(scene['state'] as SystemState);
                         },
                       ),
                     ),
@@ -651,15 +816,29 @@ class _HomePageState extends ConsumerState<HomePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Icon(Icons.devices, color: Colors.tealAccent, size: 20),
-            const SizedBox(width: 8),
-            Text(
-              '设备摘要',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+            Row(
+              children: [
+                const Icon(Icons.devices, color: Colors.tealAccent, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  '设备摘要',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const DevicesPage()),
+                );
+              },
+              child: const Text('全部设备', style: TextStyle(color: Colors.tealAccent, fontSize: 12)),
             ),
           ],
         ),
@@ -673,6 +852,12 @@ class _HomePageState extends ConsumerState<HomePage> {
               title: '网关',
               status: '在线',
               color: Colors.tealAccent,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const DevicesPage()),
+                );
+              },
             ),
             const SizedBox(width: 16),
             _buildDeviceStatusCard(
@@ -683,6 +868,12 @@ class _HomePageState extends ConsumerState<HomePage> {
               status: '2 异常',
               color: Colors.redAccent,
               isError: true,
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const DevicesPage()),
+                );
+              },
             ),
           ],
         ),
@@ -698,40 +889,44 @@ class _HomePageState extends ConsumerState<HomePage> {
     required String status,
     required Color color,
     bool isError = false,
+    VoidCallback? onTap,
   }) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: colorScheme.surfaceContainer,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isError ? color.withOpacity(0.5) : Colors.white.withOpacity(0.05), width: 1),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: color.withOpacity(0.15),
-                borderRadius: BorderRadius.circular(12),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: colorScheme.surfaceContainer,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: isError ? color.withOpacity(0.5) : Colors.white.withOpacity(0.05), width: 1),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: color.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: color, size: 24),
               ),
-              child: Icon(icon, color: color, size: 24),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              style: theme.textTheme.titleSmall?.copyWith(color: Colors.white70),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              status,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: isError ? color : Colors.white,
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: theme.textTheme.titleSmall?.copyWith(color: Colors.white70),
               ),
-            ),
-          ],
+              const SizedBox(height: 4),
+              Text(
+                status,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: isError ? color : Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

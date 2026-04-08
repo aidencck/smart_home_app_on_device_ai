@@ -11,6 +11,7 @@ import '../../application/application.dart';
 import '../../application/providers.dart';
 import '../widgets/widgets.dart';
 import '../pages/pages.dart';
+import 'device_details/device_detail_page.dart';
 import '../../main.dart'; // for global variables if needed
 
 class AgentScreen extends ConsumerStatefulWidget {
@@ -734,12 +735,12 @@ class _AgentScreenState extends ConsumerState<AgentScreen> {
                             device.id,
                           ),
                           onMoreTap: () {
-                            showModalBottomSheet(
-                              context: context,
-                              isScrollControlled: true,
-                              backgroundColor: Colors.transparent,
-                              builder: (context) => DeviceDetailSheet(
-                                deviceId: device.id,
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => DeviceDetailPage(
+                                  deviceId: device.id,
+                                ),
                               ),
                             );
                           },
