@@ -4,6 +4,7 @@ import 'pages/login_page.dart';
 import 'pages/privacy_opt_in_page.dart';
 import 'pages/ai_agent_demo_page.dart'; // 引入新建的 AI 预览页面
 import '../application/auth/auth_provider.dart';
+import '../application/linkage_manager.dart';
 import 'package:flutter/material.dart';
 import '../theme/figma_colors.dart';
 
@@ -12,6 +13,9 @@ class SmartHomeApp extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    // 启动联动管理器
+    ref.watch(linkageManagerProvider);
+    
     final authState = ref.watch(authProvider);
 
     Widget homeWidget;

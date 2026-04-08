@@ -148,11 +148,7 @@ class DeviceCard extends ConsumerWidget {
                       ],
                       Expanded(
                         child: Text(
-                          isOn
-                              ? (device is HasTemperature
-                                    ? '已开启 ${(device as HasTemperature).temperature}°C'
-                                    : '已开启')
-                              : '已关闭',
+                          _getStatusText(device),
                           style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
@@ -174,6 +170,24 @@ class DeviceCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  String _getStatusText(SmartDevice device) {
+    if (!device.isOn) return '已关闭';
+
+    if (device is SmartRingDevice) {
+      return '❤️ ${device.heartRate}bpm · 🔋 ${device.batteryLevel}%';
+    }
+    if (device is SmartBedDevice) {
+      return '📐 ${device.headHeight.toInt()}° · ${device.isLocked ? "🔒 锁定" : "🔓 解锁"}';
+    }
+    if (device is HasTemperature) {
+      return '已开启 ${(device as HasTemperature).temperature}°C';
+    }
+    if (device is HasBrightness) {
+      return '已开启 ${(device as HasBrightness).brightness.toInt()}%';
+    }
+    return '已开启';
   }
 }
 

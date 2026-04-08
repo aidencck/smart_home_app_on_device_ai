@@ -12,7 +12,7 @@
 
 ## 2. 端侧 AI (On-Device AI) 深度剖析
 
-项目基于 `packages/on_device_agent` 实现了生产级的端侧大模型推理能力，成功将 AI Agent 落地于移动端，其核心技术剖析如下：
+项目基于 `model_forge/inference/on_device_agent` 实现了生产级的端侧大模型推理能力，成功将 AI Agent 落地于移动端，其核心技术剖析如下：
 
 ### 2.1 异步隔离与高性能推理引擎
 *   **底层引擎**：基于 `llama.cpp`，并利用 Dart FFI (Foreign Function Interface) 实现 Flutter 与底层 C++ 的高效通信。

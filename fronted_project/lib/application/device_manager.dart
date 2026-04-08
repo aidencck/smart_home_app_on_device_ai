@@ -147,6 +147,34 @@ class DeviceManager extends ChangeNotifier {
     }
   }
 
+  Future<bool> setDevicePropertiesById(String deviceId, Map<String, dynamic> properties) async {
+    try {
+      final deviceIndex = _devices.indexWhere((d) => d.id == deviceId);
+      if (deviceIndex == -1) return false;
+      
+      final device = _devices[deviceIndex];
+      
+      // Update local state
+      device.properties.addAll(properties);
+      
+      // Sync to service
+      final success = await _service.setProperties(deviceId, properties);
+      if (success) {
+        notifyListeners();
+      } else {
+        // Fallback or re-fetch
+        final actualDevice = await _service.getDeviceById(deviceId);
+        if (actualDevice != null) {
+          device.properties.addAll(actualDevice.properties);
+          notifyListeners();
+        }
+      }
+      return success;
+    } catch (e) {
+      return false;
+    }
+  }
+
   List<SmartDevice> getDevicesByName(String nameKeywords) {
     return _devices
         .where(

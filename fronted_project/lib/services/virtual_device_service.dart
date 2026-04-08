@@ -29,8 +29,10 @@ class VirtualDeviceService implements DeviceService {
         CameraDevice(id: 'cam_1', name: '摄像头', room: '客厅', isOn: true),
         AirPurifierDevice(id: 'air_1', name: '空气净化器', room: '书房', isOn: false),
         VacuumDevice(id: 'robot_1', name: '扫地机器人', room: '客厅', isOn: false),
-        TvDevice(id: 'tv_1', name: '电视', room: '客厅', isOn: false),
+        TvDevice(id: 'tv_1', name: '电视', room: '卧室', isOn: true),
         CurtainDevice(id: 'curtain_1', name: '客厅窗帘', room: '客厅', isOn: false),
+        SmartRingDevice(id: 'ring_1', name: '智能戒指', room: '卧室', sleepStage: 'AWAKE'),
+        SmartBedDevice(id: 'bed_1', name: '智能床', room: '卧室', headHeight: 0.0, footHeight: 0.0),
       ]);
     }
   }

@@ -1,7 +1,7 @@
 #!/bin/sh
 # This is a generated file; do not edit or check into version control.
 export "FLUTTER_ROOT=/Users/aiden/flutter"
-export "FLUTTER_APPLICATION_PATH=/Users/aiden/Documents/macinit/smarthome APP/smart_home_app/packages/on_device_agent"
+export "FLUTTER_APPLICATION_PATH=/Users/aiden/Documents/macinit/smarthome APP/smart_home_app/model_forge/inference/on_device_agent"
 export "COCOAPODS_PARALLEL_CODE_SIGN=true"
 export "FLUTTER_TARGET=lib/main.dart"
 export "FLUTTER_BUILD_DIR=build"

@@ -24,7 +24,7 @@
 如果一位资深 C++ / 移动端架构师 Clone 了我们的代码，他们会立刻发现我们在 README 中宣称的“纯本地推理”、“零延迟”、“异步隔离”等能力，目前很大程度上依赖于 **Mock (模拟) 和妥协**。
 
 ### 1. 所谓“基于 FFI 深度绑定 llama.cpp”
-*   **现实骨感**：虽然 `packages/on_device_agent/ios/Classes/llama_cpp_src` 目录下有一大堆 C++ 源码，但如果您查看 `LlamaCppEngine` 的实现，会发现目前的 `infer` 方法**并没有真正调用底层的 FFI 接口**进行张量计算。
+*   **现实骨感**：虽然 `model_forge/inference/on_device_agent/ios/Classes/llama_cpp_src` 目录下有一大堆 C++ 源码，但如果您查看 `LlamaCppEngine` 的实现，会发现目前的 `infer` 方法**并没有真正调用底层的 FFI 接口**进行张量计算。
 *   **技术债**：实际上我们退回到了 `LlamaCppEngineMock`。真正的 C++ FFI 绑定（处理模型 Mmap、Tokenize、KV Cache 管理、Logits 采样）在 Dart 侧是极其复杂的。我们目前绕过了跨语言内存管理和指针转换的深水区。
 *   **专家拷问**：“你们说实现了端侧推理，那请问你们的 `llama_context` 指针在哪里维护？Flutter 热重载时内存泄漏怎么处理？iOS/Android 编译 CMakeLists 时如何链接 NPU/GPU 动态库？”
 

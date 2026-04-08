@@ -12,14 +12,16 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
 ## 📑 目录 (Table of Contents)
-- [商业洞察与产品愿景 (Business & Product Vision)](#-商业洞察与产品愿景-business--product-vision)
-- [核心落地能力 (Why On-Device Agent?)](#-核心落地能力-why-on-device-agent)
-- [端云协同架构全景 (Edge-Cloud Architecture)](#-端云协同架构全景-edge-cloud-architecture)
-- [项目核心亮点 (Core Project Highlights)](#-项目核心亮点-core-project-highlights)
-- [快速开始 (Getting Started)](#-快速开始-getting-started)
-- [项目文档 (Documentation)](#-项目文档-documentation)
-- [数据与模型 (Data & Model Ops)](#-数据与模型评估复现与迭代-data--model-ops)
-- [致谢与社区 (Acknowledgements & Community)](#-致谢与社区-acknowledgements--community)
+- [Business & Product Vision](#-商业洞察与产品愿景-business--product-vision)
+- [Why On-Device Agent?](#-核心落地能力-why-on-device-agent)
+- [Edge-Cloud Architecture](#-端云协同架构全景-edge-cloud-architecture)
+- [Core Project Highlights](#-项目核心亮点-core-project-highlights)
+- [Architecture Overview](#-架构全景-architecture-overview)
+- [Getting Started](#-快速开始-getting-started)
+- [Project Layout](#-monorepo-结构与关键入口-project-layout--key-entry-points)
+- [Data & Model Ops](#-数据与模型评估复现与迭代-data--model-ops)
+- [Commit Policy](#-提交规范与忽略策略-commit-policy)
+- [Acknowledgements & Community](#-致谢与社区-acknowledgements--community)
 
 ---
 
@@ -326,7 +328,7 @@ lib/ (Flutter UI 层)
  ├── main.dart (App Entry, Chat UI & Metrics Panel)
  └── services/ (IoT 设备状态管理模拟)
 
-packages/on_device_agent/ (端侧 Agent 内核)
+model_forge/inference/on_device_agent/ (端侧 Agent 内核)
  ├── lib/src/
  │    ├── engine/        # 基于 FFI 的 LlamaCppEngine & Isolate 调度
  │    ├── context/       # 环境感知、RAG 日志组装 & 动态 GBNF 生成器
@@ -357,7 +359,7 @@ packages/on_device_agent/ (端侧 Agent 内核)
 
 3. **Generate Isar database schemas:**
    ```bash
-   cd packages/on_device_agent
+   cd model_forge/inference/on_device_agent
    flutter pub run build_runner build
    cd ../..
    ```

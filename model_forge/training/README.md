@@ -13,7 +13,7 @@
 ## 🎯 目录定位 (Why this directory?)
 
 `model_forge` 是一个与主 Flutter 项目**完全解耦**的 Python 生态空间。
-Flutter 端 (`packages/on_device_agent`) 负责**“用模型”**（推理与执行），而这里负责**“造模型”**（数据合成、微调、量化）。通过将它们放在同一个 Monorepo 中，我们实现了从 AI 底层到 App 应用层的全栈管理。
+Flutter 端 (`model_forge/inference/on_device_agent`) 负责**“用模型”**（推理与执行），而这里负责**“造模型”**（数据合成、微调、量化）。通过将它们放在同一个 Monorepo 中，我们实现了从 AI 底层到 App 应用层的全栈管理。
 
 ## 📂 目录结构 (Directory Structure)
 

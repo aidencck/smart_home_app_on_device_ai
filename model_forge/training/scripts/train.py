@@ -65,10 +65,11 @@ def run_mlx_lora():
     """
     print("🚀 Starting MLX-LM QLoRA Fine-Tuning for Apple M4...")
     
-    # Define paths
+    # Define paths relative to the script directory
+    script_dir = os.path.dirname(os.path.abspath(__file__))
     base_model = "Qwen/Qwen2.5-0.5B-Instruct"
-    data_dir = "../data/processed"
-    adapter_path = "../exports/adapters"
+    data_dir = os.path.join(script_dir, "..", "data", "processed")
+    adapter_path = os.path.join(script_dir, "..", "exports", "adapters")
     
     # Ensure export dir exists
     os.makedirs(adapter_path, exist_ok=True)

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../widgets/widgets.dart';
 import '../../application/providers.dart';
 import '../../models/device.dart';
+import 'general_settings_page.dart';
 
 class HomePage extends ConsumerStatefulWidget {
   final Map<String, dynamic>? homeData;
@@ -34,6 +35,9 @@ class _HomePageState extends ConsumerState<HomePage> {
               const SizedBox(height: 16),
               // 2. 当前状态区 (Current State)
               _buildCurrentState(theme, colorScheme, deviceManager),
+              const SizedBox(height: 24),
+              // 2.1 硬件体征与健康 (Hardware Health - NEW)
+              _buildHardwareHealth(theme, colorScheme, deviceManager),
               const SizedBox(height: 24),
               // 3. 快捷控制区 (Quick Control)
               _buildQuickControl(theme, colorScheme, deviceManager),
@@ -87,7 +91,12 @@ class _HomePageState extends ConsumerState<HomePage> {
         ),
         IconButton(
           icon: const Icon(Icons.settings_outlined, color: Colors.white70),
-          onPressed: () {},
+          onPressed: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const GeneralSettingsPage()),
+            );
+          },
         ),
         const SizedBox(width: 8),
       ],
@@ -96,12 +105,13 @@ class _HomePageState extends ConsumerState<HomePage> {
 
   Widget _buildCurrentState(ThemeData theme, ColorScheme colorScheme, dynamic deviceManager) {
     final devicesCount = deviceManager.devices.length;
-    final onlineCount = deviceManager.devices.where((d) => d.isOnline).length;
+    // SmartDevice doesn't have isOnline, let's just show devicesCount for both or assume they are all online if it's a virtual device service
+    final onlineCount = devicesCount;
     
     // 找到第一个灯光设备展示其状态
     LightDevice? mainLight;
     try {
-      mainLight = deviceManager.devices.firstWhere((d) => d is LightDevice) as LightDevice;
+      mainLight = deviceManager.devices.firstWhere((SmartDevice d) => d is LightDevice) as LightDevice;
     } catch (_) {}
 
     final lightStatusText = mainLight != null 
@@ -188,10 +198,108 @@ class _HomePageState extends ConsumerState<HomePage> {
     );
   }
 
+  Widget _buildHardwareHealth(ThemeData theme, ColorScheme colorScheme, dynamic deviceManager) {
+    final ring = deviceManager.devices.whereType<SmartRingDevice>().firstOrNull;
+    final bed = deviceManager.devices.whereType<SmartBedDevice>().firstOrNull;
+
+    if (ring == null && bed == null) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '健康与生理联动',
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: Colors.white,
+              ),
+            ),
+            GestureDetector(
+              onTap: () {},
+              child: Row(
+                children: [
+                  Text(
+                    'Metric (EU/US)',
+                    style: theme.textTheme.labelSmall?.copyWith(color: Colors.white54),
+                  ),
+                  const Icon(Icons.language, size: 14, color: Colors.white54),
+                ],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            if (ring != null)
+              Expanded(
+                child: _buildHealthCard(
+                  theme,
+                  colorScheme,
+                  icon: Icons.favorite,
+                  title: '心率',
+                  value: '${ring.heartRate} bpm',
+                  subValue: '状态: ${ring.sleepStage}',
+                  color: Colors.redAccent,
+                ),
+              ),
+            if (ring != null && bed != null) const SizedBox(width: 12),
+            if (bed != null)
+              Expanded(
+                child: _buildHealthCard(
+                  theme,
+                  colorScheme,
+                  icon: Icons.bed,
+                  title: '智能床',
+                  value: '${bed.headHeight.toInt()}°',
+                  subValue: bed.isLocked ? '🔒 已锁定' : '🔓 未锁定',
+                  color: Colors.indigoAccent,
+                ),
+              ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHealthCard(
+    ThemeData theme,
+    ColorScheme colorScheme, {
+    required IconData icon,
+    required String title,
+    required String value,
+    required String subValue,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: colorScheme.surfaceContainer,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.05)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: color, size: 20),
+          const SizedBox(height: 12),
+          Text(title, style: theme.textTheme.labelMedium?.copyWith(color: Colors.white54)),
+          const SizedBox(height: 4),
+          Text(value, style: theme.textTheme.titleLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 2),
+          Text(subValue, style: theme.textTheme.bodySmall?.copyWith(color: Colors.white70)),
+        ],
+      ),
+    );
+  }
+
   Widget _buildQuickControl(ThemeData theme, ColorScheme colorScheme, dynamic deviceManager) {
     LightDevice? mainLight;
     try {
-      mainLight = deviceManager.devices.firstWhere((d) => d is LightDevice) as LightDevice;
+      mainLight = deviceManager.devices.firstWhere((SmartDevice d) => d is LightDevice) as LightDevice;
     } catch (_) {}
 
     return Column(

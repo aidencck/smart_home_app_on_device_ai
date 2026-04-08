@@ -69,8 +69,8 @@ flowchart TD
 
 ## 📑 目录 (Table of Contents)
 - [快速指引 (Role-based Entry Points)](#-快速指引-role-based-entry-points)
-- [商业洞察与产品愿景 (Business & Product Vision)](#-商业洞察与产品愿景-business--product-vision)
-- [核心落地能力 (Why On-Device Agent?)](#-核心落地能力-why-on-device-agent)
+- [商业洞察与战略规划 (Business & Strategic Overview)](#-商业洞察与战略规划-business--strategic-overview)
+- [技术底座 (Tech Enablers)](#-技术底座支撑主动智能的核心落地能力-tech-enablers)
 - [端云协同架构全景 (Edge-Cloud Architecture)](#-端云协同架构全景-edge-cloud-architecture)
 - [项目核心亮点 (Core Project Highlights)](#-项目核心亮点-core-project-highlights)
 - [快速开始 (Getting Started)](#-快速开始-getting-started)
@@ -518,7 +518,7 @@ lib/ (Flutter UI 层)
  ├── main.dart (App Entry, Chat UI & Metrics Panel)
  └── services/ (IoT 设备状态管理模拟)
 
-packages/on_device_agent/ (端侧 Agent 内核)
+model_forge/inference/on_device_agent/ (端侧 Agent 内核)
  ├── lib/src/
  │    ├── engine/        # 基于 FFI 的 LlamaCppEngine & Isolate 调度
  │    ├── context/       # 环境感知、RAG 日志组装 & 动态 GBNF 生成器
@@ -549,7 +549,7 @@ packages/on_device_agent/ (端侧 Agent 内核)
 
 3. **Generate Isar database schemas:**
    ```bash
-   cd packages/on_device_agent
+   cd model_forge/inference/on_device_agent
    flutter pub run build_runner build
    cd ../..
    ```

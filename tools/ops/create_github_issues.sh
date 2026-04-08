@@ -183,7 +183,7 @@ BODY_6="## 🎯 Epic 概述
 PHASE6_EPIC=$(create_issue "[EPIC] Phase 6: 代码库技术债清理与基础设施完善" "$BODY_6" "epic, tech-debt")
 echo "✅ Created: $PHASE6_EPIC"
 
-create_issue "完善 Llama.cpp Isolate 通信层中的流式 token callback 映射" "在 \`packages/on_device_agent/lib/src/engine/llama_cpp/llama_engine.dart\` 中，真正的 Llama.cpp 支持 token by token 的流式回调。目前只是在模拟，需要将 C++ callback 通过 SendPort 实时传递给主线程以降低 TTFT。属于 Epic: $PHASE6_EPIC" "bug, enhancement" > /dev/null
+create_issue "完善 Llama.cpp Isolate 通信层中的流式 token callback 映射" "在 \`model_forge/inference/on_device_agent/lib/src/engine/llama_cpp/llama_engine.dart\` 中，真正的 Llama.cpp 支持 token by token 的流式回调。目前只是在模拟，需要将 C++ callback 通过 SendPort 实时传递给主线程以降低 TTFT。属于 Epic: $PHASE6_EPIC" "bug, enhancement" > /dev/null
 create_issue "补全端侧硬件探针降级时的可用内存精准获取逻辑" "在 \`llama_engine.dart\` 的内存探针中，目前只写了简单的模拟阈值判断。需要接入 \`system_info\` 等插件，精准获取设备当前可用 RAM，并在不足时平滑降级到云端模型。属于 Epic: $PHASE6_EPIC" "enhancement" > /dev/null
 
 echo "🎉 All Epics and Issues have been created via curl!"

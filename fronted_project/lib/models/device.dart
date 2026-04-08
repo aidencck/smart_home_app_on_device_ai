@@ -9,6 +9,8 @@ enum DeviceType {
   vacuum,
   tv,
   curtain,
+  ring,
+  bed,
   unknown
 }
 
@@ -21,6 +23,28 @@ mixin HasTemperature on SmartDevice {
 mixin HasBrightness on SmartDevice {
   double get brightness => (properties['brightness'] as num?)?.toDouble() ?? 0.8;
   set brightness(double value) => properties['brightness'] = value;
+}
+
+mixin HasBedControl on SmartDevice {
+  double get headHeight => (properties['headHeight'] as num?)?.toDouble() ?? 0.0;
+  set headHeight(double value) => properties['headHeight'] = value;
+
+  double get footHeight => (properties['footHeight'] as num?)?.toDouble() ?? 0.0;
+  set footHeight(double value) => properties['footHeight'] = value;
+
+  bool get isLocked => properties['is_locked'] == true;
+  set isLocked(bool value) => properties['is_locked'] = value;
+}
+
+mixin HasSleepTracking on SmartDevice {
+  String get sleepStage => properties['sleep_stage']?.toString() ?? 'AWAKE';
+  set sleepStage(String value) => properties['sleep_stage'] = value;
+
+  int get heartRate => (properties['heart_rate'] as num?)?.toInt() ?? 70;
+  set heartRate(int value) => properties['heart_rate'] = value;
+
+  int get batteryLevel => (properties['battery_level'] as num?)?.toInt() ?? 85;
+  set batteryLevel(int value) => properties['battery_level'] = value;
 }
 
 // --- Security ---
@@ -248,5 +272,66 @@ class CurtainDevice extends SmartDevice {
   @override
   CurtainDevice clone() {
     return CurtainDevice(id: id, name: name, room: room, isOn: isOn);
+  }
+}
+
+class SmartRingDevice extends SmartDevice with HasSleepTracking {
+  SmartRingDevice({
+    required super.id,
+    required super.name,
+    required super.room,
+    super.isOn = true,
+    String sleepStage = 'AWAKE',
+    int heartRate = 70,
+  }) : super(type: DeviceType.ring) {
+    this.sleepStage = sleepStage;
+    this.heartRate = heartRate;
+  }
+
+  @override
+  IconData get icon => Icons.watch;
+
+  @override
+  SmartRingDevice clone() {
+    return SmartRingDevice(
+      id: id,
+      name: name,
+      room: room,
+      isOn: isOn,
+      sleepStage: sleepStage,
+      heartRate: heartRate,
+    );
+  }
+}
+
+class SmartBedDevice extends SmartDevice with HasBedControl {
+  SmartBedDevice({
+    required super.id,
+    required super.name,
+    required super.room,
+    super.isOn = true,
+    double headHeight = 0.0,
+    double footHeight = 0.0,
+    bool isLocked = false,
+  }) : super(type: DeviceType.bed) {
+    this.headHeight = headHeight;
+    this.footHeight = footHeight;
+    this.isLocked = isLocked;
+  }
+
+  @override
+  IconData get icon => Icons.bed;
+
+  @override
+  SmartBedDevice clone() {
+    return SmartBedDevice(
+      id: id,
+      name: name,
+      room: room,
+      isOn: isOn,
+      headHeight: headHeight,
+      footHeight: footHeight,
+      isLocked: isLocked,
+    );
   }
 }

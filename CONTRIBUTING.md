@@ -11,10 +11,10 @@ This project is dedicated to exploring **On-Device AI** for Smart Homes. All fea
 ## 🛠 Development Setup
 
 1. **Flutter Setup**: Ensure you are using the latest stable channel of Flutter (>= 3.x).
-2. **C++ & llama.cpp**: The core inference engine relies on `llama.cpp`. If you are modifying the C++ bindings in `packages/on_device_agent`, make sure you have CMake and Ninja installed.
+2. **C++ & llama.cpp**: The core inference engine relies on `llama.cpp`. If you are modifying the C++ bindings in `model_forge/inference/on_device_agent`, make sure you have CMake and Ninja installed.
 3. **Code Generation**: We use `build_runner` for Isar databases. If you modify any model inside `lib/src/models/`, you MUST run:
    ```bash
-   cd packages/on_device_agent
+   cd model_forge/inference/on_device_agent
    flutter pub run build_runner build --delete-conflicting-outputs
    ```
 
